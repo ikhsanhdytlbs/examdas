@@ -25,12 +25,12 @@ async function rpc(fn,a={}){
   const h={apikey:SUPABASE_KEY,'Content-Type':'application/json'};if(SUPABASE_KEY.startsWith('eyJ'))h.Authorization='Bearer '+SUPABASE_KEY;
   const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:h,body:JSON.stringify(a)});
   const j=await r.json().catch(()=>null);if(!r.ok)throw new Error(j?.message||'Gagal terhubung ke server');return j}
-let S=LS('cbt_sess'),CF={title:'Ujian Online',duration:60,maxWarn:3},ST=null,AD=null,tab='rekap',lr='siswa',ix=0,off=0,sending=false,lw=0,sv;
+let S=LS('cbt_sess'),CF={title:'Ujian Online',duration:60,maxWarn:3},ST=null,AD=null,tab='rekap',sp=null,lr='siswa',ix=0,off=0,sending=false,lw=0,sv;
 const att=()=>ST&&ST.att, live=()=>S&&S.role==='siswa'&&att()&&!att().done;
 const FS=()=>CF.fs&&!!document.documentElement.requestFullscreen; // iPhone Safari tidak mendukung: otomatis dilewati
 const toLocal=iso=>{if(!iso)return'';const d=new Date(iso),p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`};
 async function load(){if(!S)return;try{
-  if(S.role==='admin'){AD=await rpc('admin_data',{t:S.token});CF=AD.cfg;off=AD.now-Date.now()}
+  if(S.role==='admin'){AD=await rpc('admin_data',{t:S.token});CF=AD.cfg;off=AD.now-Date.now();if(!AD.pkgs.some(p=>p.id===sp))sp=CF.pkg}
   else{ST=await rpc('student_state',{t:S.token});CF=ST.cfg;off=ST.now-Date.now()}
 }catch(e){if(/unauthorized/.test(e.message)){S=null;LS('cbt_sess',null);ST=AD=null}else throw e}}
 async function refresh(){try{await load()}catch(e){toast(e.message)}render()}
@@ -56,9 +56,17 @@ function logout(){if(live())return;S=null;ST=AD=null;LS('cbt_sess',null);render(
 const hdr=()=>`<header class="bg-white border-b px-4 py-3 flex items-center justify-between gap-2"><b class="truncate">${esc(CF.title)}</b><div class="text-sm flex items-center gap-2"><span class="truncate max-w-32">${esc(S.name)}</span><button class="${G}" onclick="logout()">Keluar</button></div></header>`;
 
 /* ---------- ADMIN ---------- */
-function adminV(){const T=[['rekap','Pantau & rekap'],['soal','Soal'],['siswa','Siswa'],['set','Pengaturan']];
-return hdr()+`<div class="max-w-5xl mx-auto p-3"><div class="flex gap-2 mb-3 flex-wrap">${T.map(([k,l])=>`<button onclick="tab='${k}';render()" class="px-4 py-2 rounded-lg text-sm font-medium ${tab===k?'bg-teal-700 text-white':'bg-white border'}">${l}</button>`).join('')}</div><div class="bg-white rounded-xl border p-4">${{soal:soalV,siswa:siswaV,set:setV,rekap:rekapV}[tab]()}</div></div>`}
-function soalV(){return`<div class="flex justify-between mb-3"><h2 class="font-semibold">Daftar soal (${AD.qs.length})</h2><button onclick="qForm()" class="${P}">Tambah soal</button></div>`+(AD.qs.map((q,i)=>`<div class="border rounded-lg p-3 mb-2 flex justify-between gap-2"><div class="min-w-0"><b>${i+1}.</b> ${fmt(q.text)}<div class="text-sm text-slate-600 mt-1">${q.opts.map((o,j)=>`<div class="${j===q.ans?'text-emerald-700 font-semibold':''}">${'ABCDE'[j]}. ${fmt(o)}</div>`).join('')}</div></div><div class="shrink-0 flex flex-col sm:flex-row gap-1 h-fit"><button onclick="qForm(${q.id})" class="${G}">Edit</button><button onclick="qDel(${q.id})" class="${G} text-red-600">Hapus</button></div></div>`).join('')||'<p class="text-slate-500">Belum ada soal.</p>')}
+const pkn=id=>AD.pkgs.find(p=>p.id===id)?.name||'';
+function adminV(){const T=[['rekap','Pantau & rekap'],['soal','Soal'],['paket','Paket'],['siswa','Siswa'],['set','Pengaturan']];
+const sel=(tab==='rekap'||tab==='soal')?`<div class="flex items-center gap-2 mb-3 text-sm"><span>Paket:</span><select class="${I} max-w-xs" onchange="sp=+this.value;render()">${AD.pkgs.map(p=>`<option value="${p.id}" ${p.id===sp?'selected':''}>${esc(p.name)}${p.id===CF.pkg?' (AKTIF)':''}</option>`).join('')}</select></div>`:'';
+return hdr()+`<div class="max-w-5xl mx-auto p-3"><div class="flex gap-2 mb-3 flex-wrap">${T.map(([k,l])=>`<button onclick="tab='${k}';render()" class="px-4 py-2 rounded-lg text-sm font-medium ${tab===k?'bg-teal-700 text-white':'bg-white border'}">${l}</button>`).join('')}</div>${sel}<div class="bg-white rounded-xl border p-4">${{soal:soalV,paket:paketV,siswa:siswaV,set:setV,rekap:rekapV}[tab]()}</div></div>`}
+function paketV(){return`<div class="flex justify-between mb-1 gap-2"><h2 class="font-semibold">Paket soal</h2><button class="${P}" onclick="pkForm()">Buat paket baru</button></div><p class="text-xs text-slate-500 mb-3">Siswa mengerjakan paket yang berstatus AKTIF. Ganti paket aktif sebelum ujian dimulai, jangan saat ujian sedang berlangsung.</p>`+AD.pkgs.map(p=>`<div class="border rounded-lg p-3 mb-2 flex justify-between items-center gap-2 flex-wrap ${p.id===CF.pkg?'border-teal-600 bg-teal-50':''}"><div><b>${esc(p.name)}</b> ${p.id===CF.pkg?'<span class="text-xs bg-teal-700 text-white rounded px-2 py-0.5 ml-1">AKTIF</span>':''}<div class="text-sm text-slate-500">${p.n} soal · ${p.duration} menit</div></div><div class="flex gap-1 flex-wrap">${p.id===CF.pkg?'':`<button class="${Gr}" onclick="pkAct(${p.id})">Aktifkan</button>`}<button class="${G}" onclick="sp=${p.id};tab='soal';render()">Kelola soal</button><button class="${G}" onclick="pkForm(${p.id})">Ubah</button><button class="${G}" onclick="pkDup(${p.id})">Duplikat</button>${p.id===CF.pkg?'':`<button class="${G} text-red-600" onclick="pkDel(${p.id})">Hapus</button>`}</div></div>`).join('')}
+function pkForm(id){const p=AD.pkgs.find(x=>x.id===id)||{name:'',duration:60};modal(`<h3 class="font-semibold mb-3">${id?'Ubah':'Buat'} paket</h3><label class="text-sm">Nama paket<input id="pn" class="${I}" value="${esc(p.name)}" placeholder="mis. Trigonometri - Penilaian Harian"></label><label class="text-sm block mt-3">Durasi (menit)<input id="pd" type="number" min="1" class="${I}" value="${p.duration}"></label><div class="flex justify-end gap-2 mt-4"><button class="${G}" onclick="closeM()">Batal</button><button class="${P}" onclick="pkSave(${id||'null'})">Simpan</button></div>`)}
+function pkSave(id){const nm=$('#pn').value.trim();if(!nm)return toast('Nama paket wajib diisi.');const dur=Math.max(1,+$('#pd').value||60);closeM();act('admin_pkg_save',{pid:id,nm,dur}).then(()=>{if(!id){sp=Math.max(...AD.pkgs.map(p=>p.id));tab='soal';render()}})}
+const pkAct=id=>ask('Jadikan paket ini AKTIF? Siswa yang memulai ujian berikutnya akan mengerjakan paket ini.',()=>act('admin_pkg_activate',{pid:id}),'Aktifkan');
+const pkDup=id=>act('admin_pkg_dup',{pid:id});
+const pkDel=id=>ask('Hapus paket ini beserta semua soal dan hasil ujiannya? Tindakan ini tidak bisa dibatalkan.',()=>act('admin_pkg_del',{pid:id}),'Hapus');
+function soalV(){const Q=AD.qs.filter(q=>q.pkg===sp);return`<div class="flex justify-between mb-3 gap-2"><h2 class="font-semibold">Soal: ${esc(pkn(sp))} (${Q.length})</h2><div class="flex gap-2"><button onclick="impForm()" class="${G}">Impor soal</button><button onclick="qForm()" class="${P}">Tambah soal</button></div></div>`+(Q.map((q,i)=>`<div class="border rounded-lg p-3 mb-2 flex justify-between gap-2"><div class="min-w-0"><b>${i+1}.</b> ${fmt(q.text)}<div class="text-sm text-slate-600 mt-1">${q.opts.map((o,j)=>`<div class="${j===q.ans?'text-emerald-700 font-semibold':''}">${'ABCDE'[j]}. ${fmt(o)}</div>`).join('')}</div></div><div class="shrink-0 flex flex-col sm:flex-row gap-1 h-fit"><button onclick="qForm(${q.id})" class="${G}">Edit</button><button onclick="qDel(${q.id})" class="${G} text-red-600">Hapus</button></div></div>`).join('')||'<p class="text-slate-500">Belum ada soal di paket ini.</p>')}
 function qForm(id){const q=AD.qs.find(x=>x.id===id)||{text:'',opts:['','','','',''],ans:0,exp:''};
 modal(`<h3 class="font-semibold mb-1">${id?'Edit':'Tambah'} soal</h3><p class="text-xs text-slate-500 mb-2">Rumus: $...$ (sebaris) atau $$...$$ (blok), mis. $\\frac{a}{b}$, $\\sqrt{x}$, $\\int_0^1 x^2\\,dx$, $\\sum_{k=1}^{n} k$.</p>
 <textarea id="qt" rows="3" class="${I}" placeholder="Teks soal" oninput="pv()">${esc(q.text)}</textarea>
@@ -69,7 +77,7 @@ ${[0,1,2,3,4].map(j=>`<div class="flex items-center gap-2 mt-1"><input type="rad
 <div class="flex justify-end gap-2 mt-4"><button class="${G}" onclick="closeM()">Batal</button><button class="${P}" onclick="qSave(${id||'null'})">Simpan soal</button></div>`);pv()}
 function pv(){const o=[...document.querySelectorAll('.o')].map((x,j)=>`<div>${'ABCDE'[j]}. ${fmt(x.value)}</div>`).join('');const e=$('#qe').value?`<div class="mt-2 text-emerald-700 text-sm">Pembahasan: ${fmt($('#qe').value)}</div>`:'';$('#qp').innerHTML=`<div class="mb-2">${fmt($('#qt').value)}</div>${o}${e}`;math($('#qp'))}
 function qSave(id){const text=$('#qt').value.trim(),opts=[...document.querySelectorAll('.o')].map(x=>x.value.trim()),exp=$('#qe').value.trim(),ans=+document.querySelector('[name=qa]:checked').value;
-if(!text||opts.some(o=>!o))return toast('Teks soal dan kelima pilihan wajib diisi.');closeM();act('admin_q_save',{q:{id,text,opts,ans,exp}})}
+if(!text||opts.some(o=>!o))return toast('Teks soal dan kelima pilihan wajib diisi.');closeM();act('admin_q_save',{q:{id,pkg:sp,text,opts,ans,exp}})}
 const qDel=id=>ask('Hapus soal ini?',()=>act('admin_q_del',{qid:id}),'Hapus');
 function siswaV(){return`<h2 class="font-semibold mb-2">Akun siswa (${AD.users.length})</h2><div class="grid sm:grid-cols-4 gap-2 mb-2"><input id="sn" placeholder="Nama lengkap" class="${I}"><input id="su" placeholder="Username" class="${I}" autocapitalize="none"><input id="sp" placeholder="Password" class="${I}"><button onclick="uAdd()" class="${P}">Simpan siswa</button></div>
 <p class="text-xs text-slate-500 mb-3">Untuk mengganti password siswa, simpan ulang dengan username yang sama dan password baru.</p>
@@ -81,31 +89,68 @@ const uDel=u=>ask('Hapus akun ini beserta hasil ujiannya?',()=>act('admin_user_d
 function setV(){const c=CF,ck=(id,v,l)=>`<label class="flex items-center gap-2 text-sm"><input type="checkbox" id="${id}" ${v?'checked':''}>${l}</label>`;
 return`<h2 class="font-semibold mb-3">Pengaturan ujian</h2><div class="grid sm:grid-cols-2 gap-3 max-w-2xl">
 <label class="text-sm">Judul ujian<input id="ct" class="${I}" value="${esc(c.title)}"></label>
-<label class="text-sm">Durasi (menit)<input id="cd" type="number" min="1" class="${I}" value="${c.duration}"></label>
+
 <label class="text-sm">Batas pelanggaran sebelum terkunci<input id="cw" type="number" min="1" class="${I}" value="${c.maxWarn}"></label>
 <label class="text-sm">Ujian ditutup (tidak bisa mulai setelah)<input id="cc" type="datetime-local" class="${I}" value="${toLocal(c.close)}"></label>
 <label class="text-sm">Ganti password admin<input id="cp" type="password" class="${I}" placeholder="Kosongkan jika tidak diganti"></label></div>
 <div class="grid gap-2 mt-4">${ck('cf',c.fs,'Wajib layar penuh (HP iPhone tidak mendukung, otomatis dilewati)')}${ck('cs',c.shuffle,'Acak urutan soal tiap siswa')}${ck('cr',c.showResult,'Tampilkan nilai ke siswa setelah selesai')}${ck('ce',c.showExp,'Tampilkan pembahasan ke siswa')}</div>
 <button onclick="setSave()" class="${P} mt-4">Simpan pengaturan</button>`}
-function setSave(){const g=id=>$('#'+id),cc=g('cc').value;const c={title:g('ct').value||CF.title,duration:Math.max(1,+g('cd').value||60),maxWarn:Math.max(1,+g('cw').value||3),close:cc?new Date(cc).toISOString():'',fs:g('cf').checked,shuffle:g('cs').checked,showResult:g('cr').checked,showExp:g('ce').checked};
+function setSave(){const g=id=>$('#'+id),cc=g('cc').value;const c={title:g('ct').value||CF.title,maxWarn:Math.max(1,+g('cw').value||3),close:cc?new Date(cc).toISOString():'',fs:g('cf').checked,shuffle:g('cs').checked,showResult:g('cr').checked,showExp:g('ce').checked};
 act('admin_cfg_save',{c,np:g('cp').value}).then(()=>toast('Pengaturan tersimpan.'))}
-function rekapV(){const A=AD.att,done=A.filter(r=>r.done),avg=done.length?(done.reduce((s,r)=>s+ +r.score,0)/done.length).toFixed(1):'-',ongoing=A.length-done.length,notyet=AD.users.length-A.length;
+function rekapV(){const A=AD.att.filter(r=>r.pkg===sp),done=A.filter(r=>r.done),avg=done.length?(done.reduce((s,r)=>s+ +r.score,0)/done.length).toFixed(1):'-',ongoing=A.length-done.length,notyet=AD.users.length-A.length;
 const st=r=>{if(r.done)return esc(r.reason);const m=Math.max(0,Math.ceil((r.end-(Date.now()+off))/60000));return`<span class="text-teal-700 font-medium">Sedang ujian</span> (sisa ${m} mnt)`};
-return`<div class="flex justify-between items-center mb-3 flex-wrap gap-2"><div><h2 class="font-semibold">Pantau & rekap nilai</h2><p class="text-xs text-slate-500">Diperbarui otomatis tiap 5 detik · ${ongoing} sedang ujian · ${done.length} selesai · ${Math.max(0,notyet)} belum mulai · rata-rata ${avg}</p></div><button class="${G}" onclick="csv()">Unduh CSV</button></div>
+return`<div class="flex justify-between items-center mb-3 flex-wrap gap-2"><div><h2 class="font-semibold">Pantau & rekap: ${esc(pkn(sp))}</h2><p class="text-xs text-slate-500">Diperbarui otomatis tiap 5 detik · ${ongoing} sedang ujian · ${done.length} selesai · ${Math.max(0,notyet)} belum mulai · rata-rata ${avg}</p></div><button class="${G}" onclick="csv()">Unduh CSV</button></div>
 <div class="overflow-x-auto"><table class="w-full text-sm"><tr class="text-left border-b"><th class="py-1">Nama</th><th>Status</th><th>Terjawab</th><th>Skor</th><th>Benar</th><th>Pelanggaran</th><th></th></tr>
 ${A.map(r=>`<tr class="border-b ${r.done?'':'bg-teal-50'}"><td class="py-1">${esc(r.name)}</td><td>${st(r)}</td><td>${r.answered}</td><td class="font-semibold">${r.done?r.score:'-'}</td><td>${r.done?r.correct+'/'+r.total:'-'}</td><td class="${r.warns?'text-red-600 font-semibold':''}">${r.warns}</td><td class="text-right whitespace-nowrap"><button class="${G}" onclick="logV('${esc(r.u)}')">Log</button> <button class="${G} text-red-600" onclick="rDel('${esc(r.u)}')">Reset</button></td></tr>`).join('')||'<tr><td colspan=7 class="py-3 text-slate-500">Belum ada siswa yang memulai ujian.</td></tr>'}</table></div>`}
-function logV(u){const r=AD.att.find(x=>x.u===u);modal(`<h3 class="font-semibold mb-2">Log pelanggaran: ${esc(r.name)}</h3>${r.log.map(l=>`<div class="text-sm border-b py-1">${new Date(l.t).toLocaleTimeString('id-ID')}: ${esc(l.why)}</div>`).join('')||'<p class="text-sm text-slate-500">Tidak ada pelanggaran.</p>'}<div class="text-right mt-3"><button class="${G}" onclick="closeM()">Tutup</button></div>`)}
-const rDel=u=>ask('Reset ujian siswa ini? Hasil dihapus dan siswa dapat mengulang dari awal.',()=>act('admin_reset',{uname:u}),'Reset');
-function csv(){const rows=[['Nama','Username','Skor','Benar','Total','Pelanggaran','Status']].concat(AD.att.map(r=>[r.name,r.u,r.done?r.score:'',r.done?r.correct:'',r.total??'',r.warns,r.done?r.reason:'Sedang ujian']));
-const t=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+t],{type:'text/csv'}));a.download='rekap-nilai.csv';a.click()}
+function logV(u){const r=AD.att.find(x=>x.u===u&&x.pkg===sp);modal(`<h3 class="font-semibold mb-2">Log pelanggaran: ${esc(r.name)}</h3>${r.log.map(l=>`<div class="text-sm border-b py-1">${new Date(l.t).toLocaleTimeString('id-ID')}: ${esc(l.why)}</div>`).join('')||'<p class="text-sm text-slate-500">Tidak ada pelanggaran.</p>'}<div class="text-right mt-3"><button class="${G}" onclick="closeM()">Tutup</button></div>`)}
+const rDel=u=>ask('Reset ujian siswa ini? Hasil dihapus dan siswa dapat mengulang dari awal.',()=>act('admin_reset',{uname:u,pid:sp}),'Reset');
+function csv(){const rows=[['Nama','Username','Skor','Benar','Total','Pelanggaran','Status']].concat(AD.att.filter(r=>r.pkg===sp).map(r=>[r.name,r.u,r.done?r.score:'',r.done?r.correct:'',r.total??'',r.warns,r.done?r.reason:'Sedang ujian']));
+const t=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+t],{type:'text/csv'}));a.download='rekap-'+pkn(sp).replace(/[^\w-]+/g,'_')+'.csv';a.click()}
+
+/* ---------- IMPOR SOAL ---------- */
+function parseQ(txt){const out=[];let q=null,f=null;
+for(const raw of txt.replace(/\r/g,'').split('\n')){const l=raw.trim();if(!l)continue;let m;
+ if((m=l.match(/^(\d+)\s*[.)]\s+(.*)$/))&&(!q||+m[1]===q.n+1||q.ans!==null)){q={n:+m[1],text:m[2],o:{},ans:null,exp:''};out.push(q);f='text';continue}
+ if(!q)continue;
+ if(m=l.match(/^(?:kunci(?:\s+jawaban)?|jawaban)\s*[:=]\s*\(?([A-Ea-e])\)?/i)){q.ans=m[1].toUpperCase();f=null;continue}
+ if(m=l.match(/^(?:pembahasan|penjelasan)\s*[:=]\s*(.*)$/i)){q.exp=m[1];f='exp';continue}
+ if((m=l.match(/^\(?([A-Ea-e])[.)]\s*(.*)$/))&&!(m[1].toUpperCase() in q.o)){const k=m[1].toUpperCase();q.o[k]=m[2];f=k;continue}
+ if(f==='text')q.text+='\n'+l;else if(f==='exp')q.exp+='\n'+l;else if(f)q.o[f]+='\n'+l}
+return out.map(q=>{const L='ABCDE',miss=[...L].filter(k=>!(q.o[k]||'').trim());let err='';
+ if(!q.text.trim())err='teks soal kosong';else if(miss.length)err='pilihan '+miss.join(', ')+' tidak ditemukan (harus A sampai E)';else if(q.ans===null)err='kunci jawaban tidak ditemukan';
+ return{n:q.n,text:q.text.trim(),opts:[...L].map(k=>(q.o[k]||'').trim()),ans:q.ans?L.indexOf(q.ans):0,exp:q.exp.trim(),err}})}
+function impForm(){modal(`<h3 class="font-semibold mb-1">Impor soal ke paket: ${esc(pkn(sp))}</h3>
+<p class="text-xs text-slate-500 mb-2">Tempel soal dengan format di bawah (atau unggah file .txt). Soal ditambahkan setelah soal yang sudah ada. Rumus ditulis dengan $...$.</p>
+<pre class="bg-slate-50 border rounded p-2 text-xs overflow-auto mb-2">1. Nilai dari $\\sum_{k=1}^{4} k$ adalah ...
+A. 6
+B. 8
+C. 10
+D. 12
+E. 14
+Kunci: C
+Pembahasan: $1+2+3+4=10$
+
+2. Soal berikutnya ...</pre>
+<input type="file" accept=".txt,.md,text/plain" class="text-sm mb-2" onchange="impFile(this)">
+<textarea id="it" rows="9" class="${I} font-mono" placeholder="Tempel soal di sini" oninput="impPv()"></textarea>
+<div id="ip" class="mt-2"></div>
+<div class="flex justify-end gap-2 mt-3"><button class="${G}" onclick="closeM()">Batal</button><button id="ib" class="${P} disabled:opacity-50" onclick="impGo()" disabled>Impor</button></div>`);impPv()}
+function impFile(el){const f=el.files[0];if(f)f.text().then(t=>{$('#it').value=t;impPv()})}
+function impPv(){const R=parseQ($('#it').value),ok=R.filter(r=>!r.err),bad=R.filter(r=>r.err);
+$('#ip').innerHTML=R.length?`<p class="text-sm mb-1"><b class="text-emerald-700">${ok.length} soal siap diimpor</b>${bad.length?` · <b class="text-red-600">${bad.length} bermasalah (dilewati)</b>`:''}</p>${bad.map(r=>`<div class="text-xs text-red-600">Soal ${r.n}: ${r.err}</div>`).join('')}<div class="max-h-48 overflow-auto border rounded mt-2">${ok.map(r=>`<div class="text-sm border-b p-2"><b>${r.n}.</b> ${fmt(r.text)} <span class="text-emerald-700 font-semibold">[Kunci ${'ABCDE'[r.ans]}]</span></div>`).join('')}</div>`:'<p class="text-xs text-slate-500">Pratinjau akan tampil di sini.</p>';
+$('#ib').disabled=!ok.length;$('#ib').textContent=ok.length?`Impor ${ok.length} soal`:'Impor';math($('#ip'))}
+async function impGo(){const v=parseQ($('#it').value).filter(x=>!x.err);if(!v.length)return;const b=$('#ib');b.disabled=true;let n=0;
+try{for(const x of v){b.textContent=`Mengimpor ${n+1}/${v.length}...`;await rpc('admin_q_save',{t:S.token,q:{id:null,pkg:sp,text:x.text,opts:x.opts,ans:x.ans,exp:x.exp}});n++}}
+catch(e){toast('Gagal pada soal ke-'+(n+1)+': '+e.message+'. '+n+' soal sudah masuk.')}
+closeM();await refresh()}
 
 /* ---------- SISWA ---------- */
 function studentV(){const a=att();if(a&&!a.done)return examV();return hdr()+(a?resV(a):startV())}
 function startV(){const c=CF,closed=c.close&&Date.now()+off>new Date(c.close).getTime();
 return`<div class="max-w-xl mx-auto p-4"><div class="bg-white rounded-xl border p-6"><h2 class="text-xl font-bold mb-3">${esc(c.title)}</h2>
-<p class="text-sm mb-3">${c.duration} menit · batas pelanggaran ${c.maxWarn}x</p>
+<p class="text-sm mb-3">${esc(ST.pkg.name)} · ${ST.pkg.n} soal · ${ST.pkg.duration} menit · batas pelanggaran ${c.maxWarn}x</p>
 <ul class="text-sm list-disc pl-5 space-y-1 mb-4 text-slate-700"><li>Jangan berpindah tab/aplikasi, jangan menarik panel notifikasi, dan jangan meminimalkan layar.</li><li>Salin, tempel, dan klik kanan dinonaktifkan.</li>${FS()?'<li>Ujian berjalan dalam layar penuh. Keluar dari layar penuh dihitung pelanggaran.</li>':''}<li>Pelanggaran mencapai ${c.maxWarn}x: ujian otomatis dikumpulkan.</li><li>Waktu terus berjalan meski halaman dimuat ulang atau ditutup.</li><li>Pastikan baterai dan koneksi internet stabil.</li></ul>
-${closed?'<p class="text-red-600 text-sm">Ujian sudah ditutup.</p>':`<button class="${P}" onclick="begin()">Mulai ujian</button>`}</div></div>`}
+${!ST.pkg.n?'<p class="text-red-600 text-sm">Belum ada soal pada paket ini. Hubungi guru.</p>':closed?'<p class="text-red-600 text-sm">Ujian sudah ditutup.</p>':`<button class="${P}" onclick="begin()">Mulai ujian</button>`}</div></div>`}
 async function begin(){if(FS())document.documentElement.requestFullscreen().catch(()=>{});try{await rpc('start_attempt',{t:S.token});ix=0;await load();render()}catch(e){toast(e.message)}}
 const rem=()=>Math.max(0,Math.round((att().end-(Date.now()+off))/1000));
 function examV(){const a=att(),qs=a.qs,q=qs[ix],n=qs.length,need=FS()&&!document.fullscreenElement;
@@ -145,7 +190,7 @@ window.addEventListener('beforeunload',e=>{if(live()){e.preventDefault();e.retur
 setInterval(()=>{if(!live())return;const s=rem(),el=$('#tm');
  if(el){el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');el.className='font-mono text-base font-bold px-2 py-1 rounded text-white '+(s<60?'bg-red-600':'bg-slate-900')}
  if(s<=0)submit()},1000);
-setInterval(()=>{if(S&&S.role==='admin'&&tab==='rekap'&&!$('#modal').innerHTML)refresh()},5000);
+setInterval(()=>{if(S&&S.role==='admin'&&tab==='rekap'&&!$('#modal').innerHTML&&document.activeElement?.tagName!=='SELECT')refresh()},5000);
 (async()=>{if(SUPABASE_URL.startsWith('GANTI')){$('#app').innerHTML='<div class="p-6 max-w-md mx-auto">Isi <b>SUPABASE_URL</b> dan <b>SUPABASE_KEY</b> di bagian atas file ini terlebih dahulu.</div>';return}
  try{CF=await rpc('get_cfg')}catch(e){}
  try{await load()}catch(e){$('#app').innerHTML='<div class="p-6 max-w-md mx-auto text-red-600">Tidak dapat terhubung ke server. Periksa koneksi internet.</div>';return}
