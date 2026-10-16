@@ -8,8 +8,21 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
-<style>body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;background:#eef5ff;color:#0f172a}.noselect,.noselect *{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.noselect input{user-select:text;-webkit-user-select:text}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #1a7ff0;outline-offset:2px}</style>
+<style>body{font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;background:#1a8cff;color:#0f172a;min-height:100vh}#bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(165deg,#1488f5 0%,#2597fb 50%,#3aaeff 100%)}#app{position:relative;z-index:1}.deco{position:absolute;height:auto;fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.85}.swoosh{position:absolute;width:55vw;height:11vw;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.55),rgba(255,255,255,0));opacity:.8}.noselect,.noselect *{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.noselect input{user-select:text;-webkit-user-select:text}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #1a7ff0;outline-offset:2px}</style>
 </head><body>
+<div id="bg" aria-hidden="true">
+<div class="swoosh" style="top:16%;left:-10%;transform:rotate(14deg)"></div>
+<div class="swoosh" style="top:13%;right:-12%;width:44vw;transform:rotate(-16deg)"></div>
+<svg class="deco" viewBox="0 0 120 40" style="top:3%;left:2%;width:clamp(120px,16vw,270px);transform:rotate(33deg)"><rect x="2" y="4" width="116" height="32" rx="6"/><path d="M14 4v12M26 4v8M38 4v12M50 4v8M62 4v12M74 4v8M86 4v12M98 4v8M110 4v12"/></svg>
+<svg class="deco" viewBox="0 0 100 110" style="top:1%;right:3%;width:clamp(70px,9vw,150px);transform:rotate(12deg)"><circle cx="50" cy="45" r="36"/><ellipse cx="50" cy="45" rx="16" ry="36"/><path d="M14 45h72M20 27h60M20 63h60M50 81v14M32 99h36"/></svg>
+<svg class="deco" viewBox="0 0 120 70" style="top:34%;left:1%;width:clamp(90px,11vw,190px);transform:rotate(-14deg)"><path d="M6 64A54 54 0 0 1 114 64Z"/><path d="M26 64A34 34 0 0 1 94 64"/><path d="M60 64V14M60 64L26 30M60 64L94 30M60 64L12 48M60 64L108 48"/></svg>
+<svg class="deco" viewBox="0 0 70 120" style="top:37%;right:2%;width:clamp(44px,5.5vw,95px);transform:rotate(8deg)"><circle cx="35" cy="12" r="7"/><path d="M33 19L18 102M37 19L52 102M26 62h18M18 102l-3 12M52 102l3 12"/></svg>
+<svg class="deco" viewBox="0 0 120 30" style="bottom:7%;left:3%;width:clamp(100px,13vw,220px);transform:rotate(50deg)"><path d="M8 5h82l22 10-22 10H8a5 5 0 0 1-5-5V10a5 5 0 0 1 5-5z"/><path d="M90 5v20M22 5v20M104 10l-6 5 6 5"/></svg>
+<svg class="deco" viewBox="0 0 90 100" style="bottom:5%;right:4%;width:clamp(70px,9vw,155px);transform:rotate(18deg)"><rect x="8" y="6" width="70" height="88" rx="6"/><rect x="22" y="20" width="42" height="26" rx="5"/><path d="M22 62h42M22 74h30"/></svg>
+<svg class="deco" viewBox="0 0 100 90" style="top:63%;right:17%;width:clamp(60px,7vw,120px);transform:rotate(-20deg);opacity:.6"><path d="M6 84V8l88 76z"/><path d="M22 70V36l38 34z"/></svg>
+<svg class="deco" viewBox="0 0 100 100" style="top:9%;left:40%;width:clamp(50px,6vw,100px);transform:rotate(10deg);opacity:.55"><ellipse cx="50" cy="50" rx="44" ry="16"/><ellipse cx="50" cy="50" rx="44" ry="16" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="44" ry="16" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="4"/></svg>
+<svg class="deco" viewBox="0 0 100 100" style="bottom:9%;left:38%;width:clamp(50px,6vw,100px);transform:rotate(-8deg);opacity:.55"><circle cx="40" cy="40" r="28"/><path d="M60 60l30 30M26 34a16 16 0 0 1 14-10"/></svg>
+</div>
 <div id="app"></div><div id="modal"></div>
 <script>
 /* ====== ISI DUA BARIS INI (Supabase > Project Settings > API) ====== */
@@ -45,10 +58,10 @@ const closeM=()=>$('#modal').innerHTML='';
 function ask(msg,cb,ok='Ya'){window._cb=cb;modal(`<p class="mb-4">${msg}</p><div class="flex justify-end gap-2"><button class="${G}" onclick="closeM()">Batal</button><button class="${P}" onclick="closeM();_cb()">${ok}</button></div>`)}
 const act=async(fn,a)=>{try{await rpc(fn,{t:S.token,...a});await load();render()}catch(e){toast(e.message)}};
 
-function render(){const a=$('#app');a.innerHTML=!S?loginV():S.role==='admin'?(AD?adminV():'<p class="p-6">Memuat...</p>'):(ST?studentV():'<p class="p-6">Memuat...</p>');
+function render(){const a=$('#app');a.innerHTML=!S?loginV():S.role==='admin'?(AD?adminV():'<p class="p-6 text-white">Memuat...</p>'):(ST?studentV():'<p class="p-6 text-white">Memuat...</p>');
   document.body.classList.toggle('noselect',!!live());math(a)}
-function loginV(){return`<div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-brand-600 to-brand-400 relative overflow-hidden">
-<div class="absolute -top-24 -left-20 w-72 h-72 rounded-full bg-white/10"></div><div class="absolute -bottom-28 -right-16 w-80 h-80 rounded-full bg-white/10"></div>
+function loginV(){return`<div class="min-h-screen flex items-center justify-center p-4">
+
 <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7">
 <div class="w-14 h-14 rounded-full bg-brand-600 text-white flex items-center justify-center mx-auto mb-3"><svg viewBox="0 0 24 24" class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2.5 9 2.5 12 0v-5"/></svg></div>
 <p class="text-center text-sm text-slate-500">Selamat datang di</p>
@@ -63,7 +76,7 @@ async function login(){try{const r=await rpc('login',{u:$('#lu').value.trim(),p:
   S={token:r.token,role:r.role,name:r.name,u:r.u};LS('cbt_sess',S);ix=0;await load();render()}
  catch(e){$('#le').textContent=e.message==='invalid'?'Username atau password salah.':e.message}}
 function logout(){if(live())return;S=null;ST=AD=null;LS('cbt_sess',null);render()}
-const hdr=()=>`<header class="bg-gradient-to-r from-brand-700 to-brand-400 text-white"><div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3"><div class="flex items-center gap-3 min-w-0">${LOGO}<div class="min-w-0"><div class="font-bold leading-tight truncate tracking-wide">${APP}</div><div class="text-xs text-brand-100 truncate">${esc(CF.title||'Computer-Based Test')}</div></div></div><div class="flex items-center gap-3 text-sm min-w-0"><span class="hidden sm:inline truncate max-w-48">${S.role==='admin'?'Guru':esc(S.name)}</span><button class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25" onclick="logout()">Keluar</button></div></div></header>`;
+const hdr=()=>`<header class="text-white border-b border-white/20 bg-white/5"><div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3"><div class="flex items-center gap-3 min-w-0">${LOGO}<div class="min-w-0"><div class="font-bold leading-tight truncate tracking-wide">${APP}</div><div class="text-xs text-brand-100 truncate">${esc(CF.title||'Computer-Based Test')}</div></div></div><div class="flex items-center gap-3 text-sm min-w-0"><span class="hidden sm:inline truncate max-w-48">${S.role==='admin'?'Guru':esc(S.name)}</span><button class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25" onclick="logout()">Keluar</button></div></div></header>`;
 
 /* ---------- JENIS SOAL ---------- */
 const L='ABCDEFGH',TY={pg:'Pilihan ganda',pgk:'Pilihan ganda kompleks',bs:'Benar / Salah',isian:'Isian singkat',jodoh:'Menjodohkan'};
@@ -122,8 +135,8 @@ modal(`<h3 class="font-semibold mb-3">Daftar soal</h3><div class="grid grid-cols
 /* ---------- ADMIN ---------- */
 const pkn=id=>AD.pkgs.find(p=>p.id===id)?.name||'';
 const pkl=id=>{const p=AD.pkgs.find(x=>x.id===id);return p?p.name+(p.subject?' · '+p.subject:''):''};
-function adminV(){const T=[['rekap','Pantau & rekap'],['soal','Soal'],['paket','Paket'],['siswa','Siswa'],['set','Pengaturan']];
-const sel=(tab==='rekap'||tab==='soal')?`<div class="flex items-center gap-2 mb-3 text-sm"><span>Paket:</span><select class="${I} max-w-xs" onchange="sp=+this.value;render()">${AD.pkgs.map(p=>`<option value="${p.id}" ${p.id===sp?'selected':''}>${esc(p.name)}${p.subject?' · '+esc(p.subject):''}${p.id===CF.pkg?' (AKTIF)':''}</option>`).join('')}</select></div>`:'';
+function adminV(){const T=[['rekap','Pantau & rekap'],['paket','Paket'],['soal','Soal'],['siswa','Siswa'],['set','Pengaturan']];
+const sel=(tab==='rekap'||tab==='soal')?`<div class="flex items-center gap-2 mb-3 text-sm bg-white rounded-xl border border-blue-100 px-3 py-2 w-fit max-w-full"><span>Paket:</span><select class="${I} max-w-xs" onchange="sp=+this.value;render()">${AD.pkgs.map(p=>`<option value="${p.id}" ${p.id===sp?'selected':''}>${esc(p.name)}${p.subject?' · '+esc(p.subject):''}${p.id===CF.pkg?' (AKTIF)':''}</option>`).join('')}</select></div>`:'';
 return hdr()+`<div class="max-w-5xl mx-auto p-3"><div class="flex gap-2 mb-3 flex-wrap">${T.map(([k,l])=>`<button onclick="tab='${k}';render()" class="px-4 py-2 rounded-lg text-sm font-medium ${tab===k?'bg-brand-600 text-white':'bg-white border'}">${l}</button>`).join('')}</div>${sel}<div class="bg-white rounded-xl border p-4">${{soal:soalV,paket:paketV,siswa:siswaV,set:setV,rekap:rekapV}[tab]()}</div></div>`}
 function paketV(){return`<div class="flex justify-between mb-1 gap-2"><h2 class="font-semibold">Paket soal</h2><button class="${P}" onclick="pkForm()">Buat paket baru</button></div><p class="text-xs text-slate-500 mb-3">Siswa mengerjakan paket yang berstatus AKTIF. Ganti paket aktif sebelum ujian dimulai, jangan saat ujian sedang berlangsung.</p>`+AD.pkgs.map(p=>`<div class="border rounded-lg p-3 mb-2 flex justify-between items-center gap-2 flex-wrap ${p.id===CF.pkg?'border-brand-600 bg-brand-50':''}"><div><b>${esc(p.name)}</b> ${p.id===CF.pkg?'<span class="text-xs bg-brand-600 text-white rounded px-2 py-0.5 ml-1">AKTIF</span>':''}<div class="text-sm text-slate-500">${p.subject?esc(p.subject):'<span class="text-amber-600">Mata pelajaran belum diisi</span>'} · ${p.n} soal · ${p.duration} menit</div></div><div class="flex gap-1 flex-wrap">${p.id===CF.pkg?'':`<button class="${Gr}" onclick="pkAct(${p.id})">Aktifkan</button>`}<button class="${G}" onclick="sp=${p.id};tab='soal';render()">Kelola soal</button><button class="${G}" onclick="pkForm(${p.id})">Ubah</button><button class="${G}" onclick="pkDup(${p.id})">Duplikat</button>${p.id===CF.pkg?'':`<button class="${G} text-red-600" onclick="pkDel(${p.id})">Hapus</button>`}</div></div>`).join('')}
 function pkForm(id){const p=AD.pkgs.find(x=>x.id===id)||{name:'',subject:'',duration:60};modal(`<h3 class="font-semibold mb-3">${id?'Ubah':'Buat'} paket</h3><label class="text-sm">Mata pelajaran<input id="pm" class="${I}" value="${esc(p.subject||'')}" placeholder="mis. Matematika, Geografi, Bahasa Indonesia"></label><label class="text-sm block mt-3">Judul ujian / nama paket<input id="pn" class="${I}" value="${esc(p.name)}" placeholder="mis. Penilaian Harian 1 - Paket A"></label><label class="text-sm block mt-3">Durasi (menit)<input id="pd" type="number" min="1" class="${I}" value="${p.duration}"></label><div class="flex justify-end gap-2 mt-4"><button class="${G}" onclick="closeM()">Batal</button><button class="${P}" onclick="pkSave(${id||'null'})">Simpan</button></div>`)}
@@ -160,7 +173,7 @@ function collectQ(){const t=QT,text=$('#qt').value.trim(),exp=$('#qe').value.tri
   if(!err&&Pr.length<2)err='minimal 2 pasangan';const d=$('#jd').value.split('\n').map(x=>x.trim()).filter(Boolean);
   const it=shuf([...Pr.map((p,i)=>({t:p[1],i})),...d.map(x=>({t:x,i:-1}))]);opts={l:Pr.map(p=>p[0]),r:it.map(x=>x.t)};key=Pr.map((_,i)=>it.findIndex(x=>x.i===i))}
  if(!text)err='teks soal masih kosong';return{type:t,text,opts,key,exp,err}}
-function pv(){const q=collectQ();$('#qp').innerHTML=`<div class="mb-2">${qTxt(q.text)}</div>${q.err?`<div class="text-xs text-red-600">${q.err}</div>`:qBody(q)}${q.exp?`<div class="mt-2 text-emerald-700 text-sm">Pembahasan: ${fmt(q.exp)}</div>`:''}`;math($('#qp'))}
+function pv(){const q=collectQ();$('#qp').innerHTML=`<div class="mb-2">${qTxt(q.text)}</div>${q.err?`<div class="text-xs text-red-600 mb-1">Perhatian: ${q.err}</div>`:''}${qBody(q)}${q.exp?`<div class="mt-2 text-emerald-700 text-sm">Pembahasan: ${fmt(q.exp)}</div>`:''}`;math($('#qp'))}
 function qSave(id){const q=collectQ();if(q.err)return toast('Soal belum lengkap: '+q.err+'.');closeM();act('admin_q_save',{q:{id,pkg:sp,type:q.type,text:q.text,opts:q.opts,key:q.key,exp:q.exp}})}
 const qDel=id=>ask('Hapus soal ini?',()=>act('admin_q_del',{qid:id}),'Hapus');
 function siswaV(){return`<h2 class="font-semibold mb-2">Akun siswa (${AD.users.length})</h2><div class="grid sm:grid-cols-4 gap-2 mb-2"><input id="sn" placeholder="Nama lengkap" class="${I}"><input id="su" placeholder="Username" class="${I}" autocapitalize="none"><input id="sp" placeholder="Password" class="${I}"><button onclick="uAdd()" class="${P}">Simpan siswa</button></div>
@@ -352,8 +365,8 @@ async function begin(){if(FS())document.documentElement.requestFullscreen().catc
 const rem=()=>Math.max(0,Math.round((att().end-(Date.now()+off))/1000));
 function examV(){const a=att(),qs=a.qs,q=qs[ix],n=qs.length,need=FS()&&!document.fullscreenElement,[stim,qq]=sp3(q.text),dn=qs.filter(x=>answered(a.ans[x.id])).length,s=rem(),last=ix===n-1,mp=ST.pkg.subject?`${esc(ST.pkg.subject)} (${esc(ST.pkg.name)})`:esc(ST.pkg.name),
 pill='inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium',bt='rounded-full px-3 sm:px-6 py-2.5 text-sm font-medium transition';
-return`<div class="min-h-screen bg-[#eef5ff]">
-<header class="bg-gradient-to-r from-brand-700 to-brand-400 text-white pb-16 sm:pb-20"><div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3"><div class="flex items-center gap-3 min-w-0">${LOGO}<div class="min-w-0"><div class="font-bold leading-tight truncate tracking-wide">${APP}</div><div class="text-xs text-brand-100 truncate">${ST.pkg.subject?esc(ST.pkg.subject)+' · ':''}${esc(ST.pkg.name)}</div></div></div><div class="text-sm text-right min-w-0 max-w-[50%]"><div class="font-medium truncate">${esc(S.name)}</div><div class="text-xs text-brand-100 truncate">${esc(S.u)}</div></div></div></header>
+return`<div class="min-h-screen">
+<header class="text-white pb-16 sm:pb-20"><div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3"><div class="flex items-center gap-3 min-w-0">${LOGO}<div class="min-w-0"><div class="font-bold leading-tight truncate tracking-wide">${APP}</div><div class="text-xs text-brand-100 truncate">${ST.pkg.subject?esc(ST.pkg.subject)+' · ':''}${esc(ST.pkg.name)}</div></div></div><div class="text-sm text-right min-w-0 max-w-[50%]"><div class="font-medium truncate">${esc(S.name)}</div><div class="text-xs text-brand-100 truncate">${esc(S.u)}</div></div></div></header>
 <main class="max-w-6xl mx-auto px-3 -mt-12 sm:-mt-14 pb-8"><div class="bg-white rounded-3xl shadow-xl border border-blue-100 overflow-hidden">
 <div class="h-1.5 bg-slate-200"><div class="h-full bg-accent transition-all" style="width:${Math.round(dn/n*100)}%"></div></div>
 <div class="px-4 sm:px-6 pt-4 pb-3 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200">
@@ -405,8 +418,8 @@ setInterval(()=>{if(!live())return;const s=rem(),el=$('#tm');
  if(el){el.textContent=tmTxt(s);el.className='font-mono font-bold '+(s<60?'text-red-600':'text-brand-700')}
  if(s<=0)submit()},1000);
 setInterval(()=>{if(S&&S.role==='admin'&&tab==='rekap'&&!$('#modal').innerHTML&&document.activeElement?.tagName!=='SELECT')refresh()},5000);
-(async()=>{if(SUPABASE_URL.startsWith('GANTI')){$('#app').innerHTML='<div class="p-6 max-w-md mx-auto">Isi <b>SUPABASE_URL</b> dan <b>SUPABASE_KEY</b> di bagian atas file ini terlebih dahulu.</div>';return}
+(async()=>{if(SUPABASE_URL.startsWith('GANTI')){$('#app').innerHTML='<div class="p-6 m-4 max-w-md mx-auto bg-white rounded-2xl">Isi <b>SUPABASE_URL</b> dan <b>SUPABASE_KEY</b> di bagian atas file ini terlebih dahulu.</div>';return}
  try{CF=await rpc('get_cfg')}catch(e){}
- try{await load()}catch(e){$('#app').innerHTML='<div class="p-6 max-w-md mx-auto text-red-600">Tidak dapat terhubung ke server. Periksa koneksi internet.</div>';return}
+ try{await load()}catch(e){$('#app').innerHTML='<div class="p-6 m-4 max-w-md mx-auto bg-white rounded-2xl text-red-600">Tidak dapat terhubung ke server. Periksa koneksi internet.</div>';return}
  render();if(live()&&rem()<=0)submit()})();
 </script></body></html>
