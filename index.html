@@ -275,10 +275,10 @@ return`<div class="min-h-screen bg-slate-100">
 <div class="px-3 sm:px-6 pb-4"><div class="border border-slate-300 rounded-lg ${stim?'md:grid md:grid-cols-2':''}">
 ${stim?`<div class="p-4 sm:p-6 ${fzC()} border-b border-dotted border-slate-300 md:border-b-0 md:border-r">${fmt(stim)}</div>`:''}
 <div class="p-4 sm:p-6 ${fzC()}"><div class="mb-4 leading-relaxed">${fmt(qq)}</div>${qInput(q,a.ans[q.id])}</div></div></div>
-<div class="px-3 sm:px-6 py-4 grid grid-cols-3 gap-2 sm:gap-6 border-t border-slate-200">
-<button onclick="go(-1)" ${ix===0?'disabled':''} class="${bt} bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-40">&lsaquo; Sebelumnya</button>
-<button onclick="flag()" class="${bt} bg-amber-400 hover:bg-amber-500 text-slate-900"><span class="inline-block w-4 h-4 rounded-sm bg-white border border-slate-500 mr-1.5 text-[11px] leading-[14px] align-[-3px]">${a.flags[q.id]?'&#10003;':''}</span>Ragu-ragu</button>
-<button onclick="${last?'askSubmit()':'go(1)'}" class="${bt} bg-teal-700 hover:bg-teal-800 text-white">${last?'Selesai &#10003;':'Berikutnya &rsaquo;'}</button></div>
+<div class="px-3 sm:px-6 py-4 grid grid-cols-3 place-items-center gap-2 sm:gap-6 border-t border-slate-200">
+<button onclick="go(-1)" ${ix===0?'disabled':''} class="${bt} w-full max-w-[14rem] bg-[#dc3545] hover:bg-[#bb2d3b] text-white disabled:opacity-40 disabled:cursor-not-allowed"><span class="inline-flex w-5 h-5 rounded-full bg-white text-[#dc3545] items-center justify-center text-sm leading-none mr-1.5 sm:mr-2 align-middle">&lsaquo;</span>Soal sebelumnya</button>
+<button onclick="flag()" class="${bt} w-full max-w-[14rem] bg-[#ffc107] hover:bg-[#ffca2c] text-slate-900"><span class="inline-block w-4 h-4 rounded-sm bg-white border border-slate-600 mr-1.5 text-[11px] leading-[14px] align-[-3px]">${a.flags[q.id]?'&#10003;':''}</span>Ragu-ragu</button>
+<button onclick="${last?'askSubmit()':'go(1)'}" class="${bt} w-full max-w-[14rem] bg-[#0d6efd] hover:bg-[#0b5ed7] text-white">${last?'Selesai':'Soal berikutnya'}<span class="inline-flex w-5 h-5 rounded-full bg-white text-[#0d6efd] items-center justify-center text-sm leading-none ml-1.5 sm:ml-2 align-middle">${last?'&#10003;':'&rsaquo;'}</span></button></div>
 </div></main>
 ${need?`<div class="fixed inset-0 z-40 bg-slate-900 flex items-center justify-center p-6 text-center text-white"><div><p class="mb-4">Ujian harus dikerjakan dalam layar penuh.</p><button class="${P}" onclick="document.documentElement.requestFullscreen().catch(()=>{})">Masuk layar penuh</button></div></div>`:''}</div>`}
 function saveSoon(){clearTimeout(sv);sv=setTimeout(()=>rpc('save_progress',{t:S.token,a:att().ans,f:att().flags}).catch(()=>{}),400)}
