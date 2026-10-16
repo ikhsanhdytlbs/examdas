@@ -39,7 +39,7 @@ async function load(){if(!S)return;try{
 }catch(e){if(/unauthorized/.test(e.message)){S=null;LS('cbt_sess',null);ST=AD=null}else throw e}}
 async function refresh(){try{await load()}catch(e){toast(e.message)}render()}
 function toast(m){alert(m)}
-function math(el){if(window.renderMathInElement)renderMathInElement(el,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})}
+function math(el){if(window.renderMathInElement)renderMathInElement(el,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],ignoredClasses:['no-math'],throwOnError:false})}
 function modal(h){$('#modal').innerHTML=`<div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3"><div class="bg-white rounded-xl p-5 w-full max-w-2xl max-h-[90vh] overflow-auto">${h}</div></div>`;math($('#modal'))}
 const closeM=()=>$('#modal').innerHTML='';
 function ask(msg,cb,ok='Ya'){window._cb=cb;modal(`<p class="mb-4">${msg}</p><div class="flex justify-end gap-2"><button class="${G}" onclick="closeM()">Batal</button><button class="${P}" onclick="closeM();_cb()">${ok}</button></div>`)}
@@ -142,7 +142,7 @@ function qDyn(t,q){const o=q.opts,k=q.key;
 function qForm(id){const q=AD.qs.find(x=>x.id===id)||{type:'pg',text:'',opts:null,key:0,exp:''};QT=q.type;
 modal(`<h3 class="font-semibold mb-2">${id?'Edit':'Tambah'} soal</h3>
 <label class="text-sm">Jenis soal<select id="qty" class="${I}" onchange="qTy(this.value)" ${id?'disabled':''}>${Object.entries(TY).map(([k,v])=>`<option value="${k}" ${k===QT?'selected':''}>${v}</option>`).join('')}</select></label>
-<p class="text-xs text-slate-500 my-2">Rumus: $...$ (sebaris) atau $$...$$ (blok), mis. $\\frac{a}{b}$, $\\sqrt{x}$, $\\sum_{k=1}^{n} k$. Untuk soal bersumber teks/data: tulis teks sumber, lalu baris yang hanya berisi ###, lalu pertanyaannya (tampil dua kolom di layar lebar).</p>
+<details class="no-math my-2 text-xs text-slate-600 bg-brand-50 rounded-lg px-3 py-2"><summary class="cursor-pointer font-medium text-brand-700">Panduan menulis rumus dan teks sumber</summary><div class="mt-2 space-y-1.5"><p><b>Rumus:</b> tulis dalam LaTeX di antara tanda dolar. Sebaris: <code class="bg-white px-1 rounded">$x^2$</code>, blok: <code class="bg-white px-1 rounded">$$\\frac{a}{b}$$</code>.</p><p><b>Contoh isi rumus:</b> <code class="bg-white px-1 rounded">\\frac{a}{b}</code> pecahan, <code class="bg-white px-1 rounded">\\sqrt{x}</code> akar, <code class="bg-white px-1 rounded">x^2</code> pangkat, <code class="bg-white px-1 rounded">x_1</code> indeks bawah, <code class="bg-white px-1 rounded">\\sum_{k=1}^{n} k</code> sigma, <code class="bg-white px-1 rounded">\\pi</code>, <code class="bg-white px-1 rounded">\\le</code>, <code class="bg-white px-1 rounded">\\ge</code>.</p><p><b>Teks sumber:</b> tulis teks sumber, lalu satu baris yang hanya berisi <code class="bg-white px-1 rounded">###</code>, lalu pertanyaannya. Di layar lebar, teks sumber tampil di kolom kiri dan pertanyaan di kolom kanan.</p></div></details>
 <textarea id="qt" rows="3" class="${I}" placeholder="Teks soal" oninput="pv()">${esc(q.text)}</textarea>
 <div id="qd">${qDyn(QT,q)}</div>
 <textarea id="qe" rows="2" class="${I} mt-3" placeholder="Pembahasan (opsional)" oninput="pv()">${esc(q.exp)}</textarea>
@@ -221,7 +221,7 @@ return raw.map(q=>{const ks=Object.keys(q.o).sort(),oa=ks.map(k=>q.o[k].trim()),
   return{...base,opts:{l:Pr.map(p=>p[0]),r:it.map(x=>x.t)},key:Pr.map((_,i)=>it.findIndex(x=>x.i===i))}}
  return fail('jenis soal "'+q.ty+'" tidak dikenal')})}
 function impForm(){modal(`<h3 class="font-semibold mb-1">Impor soal ke paket: ${esc(pkl(sp))}</h3>
-<p class="text-xs text-slate-500 mb-2">Tempel soal dengan format di bawah (atau unggah file .txt). Soal ditambahkan setelah soal yang sudah ada. Rumus ditulis dengan $...$.</p>
+<p class="no-math text-xs text-slate-500 mb-2">Tempel soal dengan format di bawah, atau unggah file .txt. Soal ditambahkan setelah soal yang sudah ada di paket ini.</p><button class="${G} mb-2" onclick="impTpl()">Unduh format teks (.txt)</button>
 <details class="mb-2"><summary class="cursor-pointer text-sm text-brand-600">Lihat contoh format semua jenis soal</summary><pre class="bg-slate-50 border rounded p-2 text-xs overflow-auto mt-1">1. Pilihan ganda: nilai $\\sin 30^\\circ$ adalah ...
 A. 1
 B. $\\frac{1}{2}$
@@ -255,6 +255,80 @@ Pengecoh: 2 | 3</pre><p class="text-xs text-slate-500 mt-1">Tanpa baris Tipe: so
 <textarea id="it" rows="9" class="${I} font-mono" placeholder="Tempel soal di sini" oninput="impPv()"></textarea>
 <div id="ip" class="mt-2"></div>
 <div class="flex justify-end gap-2 mt-3"><button class="${G}" onclick="closeM()">Batal</button><button id="ib" class="${P} disabled:opacity-50" onclick="impGo()" disabled>Impor</button></div>`);impPv()}
+const TPL=String.raw`PANDUAN FORMAT IMPOR SOAL - EXAMDAS
+(Semua baris sebelum soal nomor 1 diabaikan, jadi panduan ini boleh dibiarkan.)
+
+ATURAN UMUM
+- Setiap soal diawali nomor urut lalu titik, mis. "1. " lalu "2. " dan seterusnya.
+- Pilihan ditulis A. B. C. dst. (huruf besar lalu titik), minimal 2 pilihan.
+- Kunci ditulis pada baris "Kunci: ..." (boleh juga "Jawaban: ...").
+- Pembahasan ditulis pada baris "Pembahasan: ..." (boleh dikosongkan).
+- Teks soal, pilihan, dan pembahasan boleh lebih dari satu baris.
+- Rumus ditulis dengan LaTeX di antara tanda dolar: $x^2$ (sebaris) atau $$\frac{a}{b}$$ (blok).
+- Soal bersumber teks atau data: tulis teks sumber, lalu satu baris berisi ###, lalu pertanyaannya.
+- Jenis soal ditulis pada baris "Tipe:" dengan pilihan: pg, pgk, bs, isian, jodoh.
+  Tanpa baris Tipe, soal dianggap pilihan ganda (atau pgk jika kuncinya lebih dari satu huruf).
+- Beri satu baris kosong antar soal agar rapi (tidak wajib).
+
+CONTOH SEMUA JENIS SOAL (hapus atau ganti dengan soal Anda)
+
+1. Ibu kota Indonesia adalah ...
+A. Surabaya
+B. Jakarta
+C. Bandung
+D. Medan
+E. Makassar
+Kunci: B
+Pembahasan: Jakarta adalah ibu kota negara Indonesia.
+
+2. Pilihlah semua pernyataan yang benar tentang bilangan prima.
+Tipe: pgk
+A. 2 adalah bilangan prima
+B. 9 adalah bilangan prima
+C. 7 adalah bilangan prima
+D. 1 adalah bilangan prima
+Kunci: A,C
+Pembahasan: 9 habis dibagi 3 dan 1 bukan bilangan prima.
+
+3. Tentukan Benar (B) atau Salah (S) untuk setiap pernyataan berikut.
+Tipe: bs
+A. Air murni mendidih pada suhu 100 derajat Celsius pada tekanan 1 atm.
+B. Bumi adalah planet terbesar di tata surya.
+C. Matahari terbit di arah timur.
+Kunci: B,S,B
+Pembahasan: Planet terbesar di tata surya adalah Jupiter.
+
+4. Hasil dari $2 + 3 \times 4$ adalah ...
+Tipe: isian
+Kunci: 14
+Pembahasan: Perkalian dikerjakan lebih dulu, sehingga $2 + 12 = 14$.
+
+5. Jodohkan setiap negara dengan ibu kotanya.
+Tipe: jodoh
+A. Jepang => Tokyo
+B. Prancis => Paris
+C. Mesir => Kairo
+Pengecoh: Roma | Madrid
+Pembahasan: Pengecoh adalah pilihan kanan yang tidak punya pasangan.
+
+6. Perhatikan data berikut.
+Sebuah mobil menempuh jarak $120$ km dalam waktu $2$ jam.
+###
+Kecepatan rata-rata mobil tersebut adalah ...
+A. 40 km/jam
+B. 50 km/jam
+C. 60 km/jam
+D. 70 km/jam
+E. 80 km/jam
+Kunci: C
+Pembahasan: $v=\frac{s}{t}=\frac{120}{2}=60$ km/jam.
+
+CATATAN JENIS SOAL
+- pgk (pilihan ganda kompleks): Kunci berisi lebih dari satu huruf, dipisah koma, mis. Kunci: A,C
+- bs (benar/salah): tiap pilihan adalah satu pernyataan; Kunci berisi B atau S sesuai urutan, mis. Kunci: B,S,B
+- isian: tanpa pilihan A-E; Kunci berisi jawaban benar. Jawaban alternatif dipisah tanda |, mis. Kunci: 14 | empat belas
+- jodoh (menjodohkan): tulis tiap pasangan sebagai "A. kiri => kanan". Pengecoh (opsional) dipisah tanda |.`;
+function impTpl(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+TPL.replace(/\n/g,'\r\n')],{type:'text/plain'}));a.download='format-impor-soal.txt';a.click()}
 function impFile(el){const f=el.files[0];if(f)f.text().then(t=>{$('#it').value=t;impPv()})}
 function impPv(){const R=parseQ($('#it').value),ok=R.filter(r=>!r.err),bad=R.filter(r=>r.err);
 $('#ip').innerHTML=R.length?`<p class="text-sm mb-1"><b class="text-emerald-700">${ok.length} soal siap diimpor</b>${bad.length?` · <b class="text-red-600">${bad.length} bermasalah (dilewati)</b>`:''}</p>${bad.map(r=>`<div class="text-xs text-red-600">Soal ${r.n}: ${r.err}</div>`).join('')}<div class="max-h-56 overflow-auto border rounded mt-2">${ok.map(r=>`<div class="text-sm border-b p-2"><b>${r.n}.</b> <span class="text-xs bg-slate-100 border rounded px-1.5 py-0.5">${TY[r.type]}</span> ${qTxt(r.text)}<div class="text-xs text-slate-600 mt-1">${qBody(r)}</div></div>`).join('')}</div>`:'<p class="text-xs text-slate-500">Pratinjau akan tampil di sini.</p>';
