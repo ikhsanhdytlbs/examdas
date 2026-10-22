@@ -216,6 +216,7 @@ function qForm(id){const q=AD.qs.find(x=>x.id===id)||{type:'pg',text:'',opts:nul
 modal(`<h3 class="font-semibold mb-2">${id?'Edit':'Tambah'} soal</h3>${id?ongWarn(sp):''}
 <label class="text-sm">Jenis soal<select id="qty" class="${I}" onchange="qTy(this.value)" ${id?'disabled':''}>${Object.entries(TY).map(([k,v])=>`<option value="${k}" ${k===QT?'selected':''}>${v}</option>`).join('')}</select></label>
 <details class="no-math my-2 text-xs text-slate-600 bg-brand-50 rounded-lg px-3 py-2"><summary class="cursor-pointer font-medium text-brand-700">Panduan menulis rumus dan teks sumber</summary><div class="mt-2 space-y-1.5"><p><b>Rumus:</b> tulis dalam LaTeX di antara tanda dolar. Sebaris: <code class="bg-white px-1 rounded">$x^2$</code>, blok: <code class="bg-white px-1 rounded">$$\\frac{a}{b}$$</code>.</p><p><b>Contoh isi rumus:</b> <code class="bg-white px-1 rounded">\\frac{a}{b}</code> pecahan, <code class="bg-white px-1 rounded">\\sqrt{x}</code> akar, <code class="bg-white px-1 rounded">x^2</code> pangkat, <code class="bg-white px-1 rounded">x_1</code> indeks bawah, <code class="bg-white px-1 rounded">\\sum_{k=1}^{n} k</code> sigma, <code class="bg-white px-1 rounded">\\pi</code>, <code class="bg-white px-1 rounded">\\le</code>, <code class="bg-white px-1 rounded">\\ge</code>.</p><p><b>Teks sumber:</b> tulis teks sumber, lalu satu baris yang hanya berisi <code class="bg-white px-1 rounded">###</code>, lalu pertanyaannya. Di layar lebar, teks sumber tampil di kolom kiri dan pertanyaan di kolom kanan.</p></div></details>
+<div id="sbar" class="no-math sticky top-0 z-10 bg-white py-1">${symBar()}</div>
 <textarea id="qt" rows="3" class="${I}" placeholder="Teks soal" oninput="pv()">${esc(q.text)}</textarea>
 <div class="mt-2 border border-dashed border-slate-300 rounded-lg p-3"><div class="text-sm font-medium mb-1">Gambar soal <span class="font-normal text-slate-500">(opsional)</span></div><div id="qim"></div><input type="file" id="qif" accept="image/*" class="hidden" onchange="imgPick(this)"><div class="flex gap-2 flex-wrap"><button type="button" class="${G}" onclick="$('#qif').click()">Pilih gambar</button><button type="button" id="qirm" class="${G} text-red-600" style="display:none" onclick="imgDel()">Hapus gambar</button></div><p class="text-xs text-slate-500 mt-1">JPG atau PNG. Gambar dikecilkan otomatis agar ringan di HP siswa.</p></div>
 <div id="qd">${qDyn(QT,q)}</div>
@@ -223,6 +224,36 @@ modal(`<h3 class="font-semibold mb-2">${id?'Edit':'Tambah'} soal</h3>${id?ongWar
 <textarea id="qe" rows="2" class="${I} mt-3" placeholder="Pembahasan (opsional)" oninput="pv()">${esc(q.exp)}</textarea>
 <div class="mt-3 border rounded-lg p-3 bg-slate-50"><div class="text-xs text-slate-500 mb-1">Pratinjau</div><div id="qp"></div></div>
 <div class="flex justify-end gap-2 mt-4"><button class="${G}" onclick="closeM()">Batal</button><button class="${P}" onclick="qSave(${id||'null'})">Simpan soal</button></div>`);pv();if(id&&q.hasimg)imgLoad(id)}
+
+/* ===== Tombol simbol matematika di editor soal ===== */
+// Entri: [label LaTeX, potongan; "#" = posisi kursor/teks terpilih, flag attach = menempel pada simbol sebelumnya]
+const SYM=[
+['Dasar',[['\\frac{a}{b}','\\frac{#}{}'],['x^{n}','x^{#}',1],['x_{n}','x_{#}',1],['\\sqrt{x}','\\sqrt{#}'],['\\sqrt[n]{x}','\\sqrt[]{#}'],['\\times','\\times '],['\\div','\\div '],['\\pm','\\pm '],['\\left|x\\right|','\\left|#\\right|'],['(\\ )','\\left(#\\right)'],['^\\circ','^\\circ'],['\\pi','\\pi '],['\\infty','\\infty '],['\\%','\\%']]],
+['Relasi dan himpunan',[['\\le','\\le '],['\\ge','\\ge '],['<','<'],['>','>'],['\\ne','\\ne '],['\\approx','\\approx '],['\\in','\\in '],['\\notin','\\notin '],['\\subset','\\subset '],['\\cup','\\cup '],['\\cap','\\cap '],['\\varnothing','\\varnothing '],['\\mathbb{R}','\\mathbb{R}'],['\\mathbb{Z}','\\mathbb{Z}'],['\\mathbb{N}','\\mathbb{N}'],['\\mathbb{Q}','\\mathbb{Q}'],['\\Rightarrow','\\Rightarrow '],['\\Leftrightarrow','\\Leftrightarrow '],['\\forall','\\forall '],['\\exists','\\exists ']]],
+['Fungsi dan kalkulus',[['f(x)','f(#)'],['f^{-1}','f^{-1}(#)'],['\\log_{a}b','\\log_{#}{}'],['\\ln x','\\ln #'],['e^{x}','e^{#}'],['\\lim_{x\\to a}','\\lim_{x\\to #} '],['\\sum_{k=1}^{n}','\\sum_{k=1}^{#} '],['\\int_{a}^{b}','\\int_{#}^{} '],['\\frac{dy}{dx}','\\frac{dy}{dx}'],['\\Delta','\\Delta '],['\\bar{x}','\\bar{#}'],['\\binom{n}{r}','\\binom{#}{}'],['n!','n!']]],
+['Trigonometri',[['\\sin','\\sin '],['\\cos','\\cos '],['\\tan','\\tan '],['\\sin^{2}','\\sin^{2} '],['\\cos^{2}','\\cos^{2} '],['\\theta','\\theta '],['\\alpha','\\alpha '],['\\beta','\\beta '],['\\gamma','\\gamma '],['\\phi','\\varphi '],['\\omega','\\omega '],['\\lambda','\\lambda '],['\\mu','\\mu '],['\\sigma','\\sigma ']]],
+['Matriks dan sistem',[['\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}','\\begin{pmatrix} #&\\\\ &\\end{pmatrix}'],['\\begin{cases}\\ \\end{cases}','\\begin{cases} #\\\\ \\end{cases}'],['\\overrightarrow{AB}','\\overrightarrow{#}'],['\\vec{v}','\\vec{#}'],['\\angle','\\angle '],['\\triangle','\\triangle '],['\\parallel','\\parallel '],['\\perp','\\perp '],['\\cong','\\cong '],['\\sim','\\sim ']]]
+];
+let SYMT=0,LF=null;
+const symL=s=>{try{return window.katex?katex.renderToString(s,{throwOnError:false}):esc(s)}catch(e){return esc(s)}};
+function symBar(){const B='shrink-0 border border-slate-300 rounded bg-white hover:bg-brand-50 text-base';
+ return`<div class="flex gap-1 overflow-x-auto pb-1">${SYM.map((g,i)=>`<button type="button" onmousedown="event.preventDefault()" onclick="symTab(${i})" class="shrink-0 text-xs px-2 py-1 rounded-full ${i===SYMT?'bg-brand-600 text-white':'bg-slate-100 text-slate-700'}">${g[0]}</button>`).join('')}</div>
+<div class="flex gap-1 overflow-x-auto pb-1">${SYM[SYMT][1].map((s,j)=>`<button type="button" title="${esc(s[1])}" onmousedown="event.preventDefault()" onclick="insSym(${j})" class="${B} min-w-[2.5rem] h-10 px-2">${symL(s[0])}</button>`).join('')}</div>
+<div class="text-[11px] text-slate-500">Klik kolom teks, lalu klik simbol. Rumus otomatis diberi tanda $ di kedua sisinya.</div>`}
+const symTab=i=>{SYMT=i;$('#sbar').innerHTML=symBar()};
+document.addEventListener('focusin',e=>{const x=e.target;if(x&&x.closest&&x.closest('#modal')&&(x.tagName==='TEXTAREA'||(x.tagName==='INPUT'&&(!x.type||x.type==='text'))))LF=x});
+function insSym(j){const f=LF&&$('#modal').contains(LF)?LF:$('#qt');if(!f)return;
+ const e=SYM[SYMT][1][j],v=f.value,a=f.selectionStart??v.length,b=f.selectionEnd??a,sel=v.slice(a,b),before=v.slice(0,a);
+ const inside=((before.replace(/\\\$/g,'').match(/\$/g)||[]).length%2)===1;
+ let sn=e[1];if(e[2]&&inside&&/[\w)}\]]$/.test(before))sn=sn.slice(1); // x^{n} menempel pada simbol sebelumnya
+ const pos=sn.indexOf('#'),body=sn.replace('#',sel),w=inside?'':'$',ins=w+body+w;
+ f.value=before+ins+v.slice(b);
+ const c=a+w.length+(pos<0?body.length:pos+sel.length);
+ f.focus();try{f.setSelectionRange(c,c)}catch(_){}pv()}
+function mathErr(s){if(!window.katex||typeof s!=='string'||!s)return'';
+ if((s.replace(/\\\$/g,'').match(/\$/g)||[]).length%2)return'tanda $ tidak berpasangan.';
+ const re=/\$\$([\s\S]+?)\$\$|\$([^$]+?)\$/g;let m;
+ while((m=re.exec(s))){try{katex.renderToString(m[1]||m[2],{throwOnError:true})}catch(x){return'rumus tidak valid ('+String(x.message||x).replace(/^KaTeX parse error:\s*/,'').slice(0,110)+').'}}return''}
 const qTy=t=>{QT=t;$('#qd').innerHTML=qDyn(t,{opts:null,key:t==='pg'?0:[]});pv()};
 function collectQ(){const t=QT,text=$('#qt').value.trim(),exp=$('#qe').value.trim();let opts,key,err='';
  const vals=sel=>[...document.querySelectorAll(sel)].map(x=>x.value.trim()),trail=a=>{let n=a.length;while(n&&!a[n-1])n--;return n};
@@ -236,7 +267,7 @@ function collectQ(){const t=QT,text=$('#qt').value.trim(),exp=$('#qe').value.tri
   if(!err&&Pr.length<2)err='minimal 2 pasangan';const d=$('#jd').value.split('\n').map(x=>x.trim()).filter(Boolean);
   const it=shuf([...Pr.map((p,i)=>({t:p[1],i})),...d.map(x=>({t:x,i:-1}))]);opts={l:Pr.map(p=>p[0]),r:it.map(x=>x.t)};key=Pr.map((_,i)=>it.findIndex(x=>x.i===i))}
  if(!text)err='teks soal masih kosong';return{type:t,text,opts,key,exp,err,w:Math.min(100,Math.max(0.1,parseFloat(($('#qw')||{}).value)||1))}}
-function pv(){const q=collectQ();$('#qp').innerHTML=`<div class="mb-2">${qTxt(q.text)}</div>${QIS?`<img src="${esc(QIS)}" class="max-h-40 max-w-full rounded border mb-2" alt="">`:''}${q.err?`<div class="text-xs text-red-600 mb-1">Perhatian: ${q.err}</div>`:''}${qBody(q)}${q.exp?`<div class="mt-2 text-emerald-700 text-sm">Pembahasan: ${fmt(q.exp)}</div>`:''}`;math($('#qp'))}
+function pv(){const q=collectQ();$('#qp').innerHTML=`<div class="mb-2">${qTxt(q.text)}</div>${QIS?`<img src="${esc(QIS)}" class="max-h-40 max-w-full rounded border mb-2" alt="">`:''}${q.err?`<div class="text-xs text-red-600 mb-1">Perhatian: ${q.err}</div>`:''}${(()=>{const m=mathErr(q.text)||mathErr(q.exp)||(Array.isArray(q.opts)?q.opts.map(mathErr).find(Boolean):'');return m?`<div class="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mb-1">Periksa rumus: ${esc(m)}</div>`:''})()}${qBody(q)}${q.exp?`<div class="mt-2 text-emerald-700 text-sm">Pembahasan: ${fmt(q.exp)}</div>`:''}`;math($('#qp'))}
 function qSave(id){const q=collectQ();if(q.err)return toast('Soal belum lengkap: '+q.err+'.');const ing=ongoing(sp);if(id&&ing&&!confirm(ing+' siswa sedang mengerjakan paket ini. Perubahan soal akan memengaruhi nilai mereka. Tetap simpan?'))return;closeM();const o={id,pkg:sp,type:q.type,text:q.text,opts:q.opts,key:q.key,exp:q.exp,w:q.w};if(QI!==undefined)o.img=QI||'';act('admin_q_save',{q:o})}
 const qDel=id=>ask((ongoing(sp)?`<b class="text-amber-700">${ongoing(sp)} siswa sedang mengerjakan paket ini; menghapus soal akan memengaruhi nilai mereka.</b><br>`:'')+'Hapus soal ini?',()=>act('admin_q_del',{qid:id}),'Hapus');
 function siswaV(){const U=AD.users.filter(u=>!kf||u.kelas===kf);return`<div class="flex justify-between items-center gap-2 flex-wrap mb-2"><h2 class="font-semibold">Akun siswa (${U.length}${kf?' dari '+AD.users.length:''})</h2>${kfSel()}</div><div class="grid sm:grid-cols-5 gap-2 mb-2"><input id="sn" placeholder="Nama lengkap" class="${I}"><input id="su" placeholder="Username" class="${I}" autocapitalize="none"><input id="sp" placeholder="Password" class="${I}"><input id="sk" placeholder="Kelas (mis. X-1)" class="${I}" list="kl"><datalist id="kl">${kls().map(k=>`<option value="${esc(k)}">`).join('')}</datalist><button onclick="uAdd()" class="${P}">Simpan siswa</button></div>
