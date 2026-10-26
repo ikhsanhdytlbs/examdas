@@ -154,7 +154,7 @@ let WMK='';
 function wmSet(){const on=!!(S&&!staff()&&live()),b=document.body;if(!on){if(WMK){b.classList.remove('wm');b.style.removeProperty('--wm');WMK=''}return}
  const k=S.name+'|'+S.u;if(k===WMK)return;WMK=k;
  const t=String(S.name||'').replace(/[<>&]/g,'')+' · '+String(S.u||'').replace(/[<>&]/g,'');
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="260" height="170"><text x="130" y="85" font-family="sans-serif" font-size="15" font-weight="600" fill="#0f172a" fill-opacity="0.11" text-anchor="middle" transform="rotate(-24 130 85)">${t}</text></svg>`;
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240"><text x="180" y="120" font-family="sans-serif" font-size="13" font-weight="400" fill="#0f172a" fill-opacity="0.055" text-anchor="middle" transform="rotate(-24 180 120)">${t}</text></svg>`;
  b.style.setProperty('--wm',`url("data:image/svg+xml,${encodeURIComponent(svg)}")`);b.classList.add('wm')}
 /* ---------- TRANSISI HALAMAN (hanya saat pindah halaman, bukan tiap penyegaran data) ---------- */
 const TABO=['rekap','analisis','paket','soal','siswa','akun','set'],PSO=['akses','aman','nilai'];
