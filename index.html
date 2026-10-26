@@ -28,6 +28,8 @@ html{-webkit-text-size-adjust:100%}@media(min-width:640px){html{scrollbar-gutter
 button{transition:transform .12s ease,background-color .18s ease,border-color .18s ease,box-shadow .18s ease,color .18s ease}
 button:not(:disabled):active{transform:scale(.97)}
 @media(prefers-reduced-motion:reduce){.v-up,.v-r,.v-l,.v-up .stg>*,.mw-a,.mw-a .mi{animation:none}button{transition:none}}
+body.wm::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;background-image:var(--wm);background-repeat:repeat}
+@media print{body.wm #app{display:none!important}body.wm::before{content:'Dicetak tidak diizinkan saat ujian';display:block;padding:2rem;font-size:1.2rem}}
 #toasts{position:fixed;top:max(.75rem,env(safe-area-inset-top));left:0;right:0;z-index:100;display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:0 .75rem;pointer-events:none}
 .tst{pointer-events:auto;position:relative;overflow:hidden;display:flex;align-items:center;gap:.75rem;width:100%;max-width:26rem;background:#fff;border-radius:1rem;padding:.7rem .9rem .8rem .7rem;box-shadow:0 12px 32px -8px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.06);animation:tstIn .35s cubic-bezier(.2,.9,.3,1.2)}
 .tst-out{animation:tstOut .25s ease forwards}
@@ -146,7 +148,14 @@ const act=async(fn,a)=>{try{await rpc(fn,{t:S.token,...a});await load();render()
 let inR=false;
 function render(){if(inR)return;inR=true;try{const ae=document.activeElement;if(ae&&ae!==document.body&&$('#app').contains(ae))ae.blur(); // blur memicu "change" lebih dulu, sebelum elemen dihapus
   const a=$('#app');document.body.classList.toggle('login',!S);a.innerHTML=!S?loginV():staff()?(AD?adminV():'<p class="p-6">Memuat...</p>'):(ST?studentV():'<p class="p-6">Memuat...</p>');
-  document.body.classList.toggle('noselect',!!live());math(a);pageTrans(a);if(document.getElementById('jbox')){drawJ();setTimeout(drawJ,200);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawJ)}}finally{inR=false}}
+  document.body.classList.toggle('noselect',!!live());wmSet();math(a);pageTrans(a);if(document.getElementById('jbox')){drawJ();setTimeout(drawJ,200);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawJ)}}finally{inR=false}}
+/* ---------- Pelindung layar ujian: watermark nama siswa (jejak jika soal disebar), blokir cetak ---------- */
+let WMK='';
+function wmSet(){const on=!!(S&&!staff()&&live()),b=document.body;if(!on){if(WMK){b.classList.remove('wm');b.style.removeProperty('--wm');WMK=''}return}
+ const k=S.name+'|'+S.u;if(k===WMK)return;WMK=k;
+ const t=String(S.name||'').replace(/[<>&]/g,'')+' · '+String(S.u||'').replace(/[<>&]/g,'');
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="260" height="170"><text x="130" y="85" font-family="sans-serif" font-size="15" font-weight="600" fill="#0f172a" fill-opacity="0.11" text-anchor="middle" transform="rotate(-24 130 85)">${t}</text></svg>`;
+ b.style.setProperty('--wm',`url("data:image/svg+xml,${encodeURIComponent(svg)}")`);b.classList.add('wm')}
 /* ---------- TRANSISI HALAMAN (hanya saat pindah halaman, bukan tiap penyegaran data) ---------- */
 const TABO=['rekap','analisis','paket','soal','siswa','akun','set'],PSO=['akses','aman','nilai'];
 let VK=null,VN=0,VT0=0,VC='';
@@ -535,7 +544,11 @@ const pfSave=()=>{const nm=$('#pfn').value.trim();if(!nm)return toast('Nama waji
 const gEdit=u=>{const t=AD.teachers.find(x=>x.u===u);if(!t)return;$('#gn').value=t.name;$('#gu').value=t.u;$('#gr').value=t.role;$('#gp').value='';$('#gp').focus()};
 const gAdd=()=>{const nm=$('#gn').value.trim(),uname=$('#gu').value.trim(),pw=$('#gp').value,rl=$('#gr').value;if(!nm||!uname)return toast('Nama dan username wajib diisi.');act('admin_teacher_save',{uname,nm,pw,rl}).then(ok=>ok&&toast('Akun tersimpan.'))};
 const gDel=u=>ask('Hapus akun ini? Paketnya dipindahkan ke Anda dan dinonaktifkan.',()=>act('admin_teacher_del',{uname:u}),'Hapus');
-function rekapV(){const kk=kkmOf(sp),U=AD.users.filter(u=>!kf||u.kelas===kf),A=AD.att.filter(r=>r.pkg===sp&&(!kf||r.kelas===kf)),done=A.filter(r=>r.done),fin=done.filter(r=>!r.pending),
+// siswa yang ikut ujian: kelas yang diizinkan paket; jika paket untuk semua kelas, hanya kelas yang sudah ada pengerjanya
+function tgtU(pid,att){const k=String(pcf(pid).kelas||'').trim();let set;
+ if(k)set=new Set(k.toLowerCase().split(/\s*[,;]\s*/));else if(att.length)set=new Set(att.map(r=>String(r.kelas||'').toLowerCase()));else return()=>true;
+ return u=>set.has(String(u.kelas||'').toLowerCase())}
+function rekapV(){const kk=kkmOf(sp),tg=tgtU(sp,AD.att.filter(r=>r.pkg===sp)),U=AD.users.filter(u=>tg(u)&&(!kf||u.kelas===kf)),A=AD.att.filter(r=>r.pkg===sp&&(!kf||r.kelas===kf)),done=A.filter(r=>r.done),fin=done.filter(r=>!r.pending),
  avg=fin.length?(fin.reduce((s,r)=>s+ +r.score,0)/fin.length).toFixed(1):'-',ing=A.length-done.length,notyet=U.filter(u=>!A.some(r=>r.u===u.u)).length,pend=done.filter(r=>r.pending>0).length;
 const st=r=>{if(r.done){const c=r.reason==='Dikumpulkan siswa'?'green':/pelanggaran|curang/i.test(r.reason||'')?'red':'amber';return`<span class="${bdg(c)}">${esc(r.reason)}</span>`+(r.pending?`<div class="text-xs text-amber-700 mt-1">${r.pending} uraian belum dinilai</div>`:'')}
  const m=Math.max(0,Math.ceil((r.end-(Date.now()+off))/60000));return`<span class="${bdg('blue')}"><span class="live-dot"></span>Sedang ujian</span><div class="text-xs text-slate-500 mt-1">sisa ${m} mnt</div>`};
@@ -636,7 +649,7 @@ async function xls(){try{await loadX()}catch(e){return toast(e.message)}
   its.forEach(x=>{pm+=x.q.w;const has=answered(x.a);if(has)dj++;if(x.s==null){if(has)tu++}else{po+=x.s*x.q.w;if(x.s>=0.999)be++;else if(x.s>0)se++;else if(has)sa++}});
   const sc=a.done?+a.score:null;
   return{a,its,n:its.length,dj,ko:its.length-dj,be,se,sa,tu,po,pm,sc,ok:a.done&&!a.pending&&sc!=null,dur:a.start&&a.fin&&a.done?Math.max(0,Math.round((a.fin-a.start)/60000)):''}}).sort((x,y)=>cmp(x.a.kelas,y.a.kelas)||cmp(x.a.name,y.a.name));
- const NA=AD.users.filter(u=>(!kf||u.kelas===kf)&&!have.has(u.u)).sort((a,b)=>cmp(a.kelas,b.kelas)||cmp(a.name,b.name));
+ const tg=tgtU(sp,X.att),NA=AD.users.filter(u=>tg(u)&&(!kf||u.kelas===kf)&&!have.has(u.u)).sort((a,b)=>cmp(a.kelas,b.kelas)||cmp(a.name,b.name));
  const fin=R.filter(r=>r.ok),sc=fin.map(r=>r.sc).sort((a,b)=>a-b),N=sc.length,avg=N?sc.reduce((a,b)=>a+b,0)/N:null,
   med=N?(N%2?sc[(N-1)/2]:(sc[N/2-1]+sc[N/2])/2):null,sd=N?Math.sqrt(sc.reduce((a,b)=>a+(b-avg)**2,0)/N):null,
   stt=r=>!r.a.done?'Sedang ujian':r.a.pending?'Selesai (uraian belum dinilai)':'Selesai',
@@ -999,6 +1012,7 @@ document.addEventListener('fullscreenchange',()=>{if(live()&&FS()){if(!document.
 ['contextmenu','copy','cut','paste','selectstart','dragstart'].forEach(t=>document.addEventListener(t,e=>{if(live()&&!(t==='selectstart'&&['INPUT','TEXTAREA'].includes(e.target.tagName)))e.preventDefault()}));
 document.addEventListener('keydown',e=>{if(!live())return;const k=e.key.toLowerCase(),m=e.ctrlKey||e.metaKey;
 if(e.key==='F12'||e.key==='PrintScreen'||(m&&['c','v','x','a','u','s','p'].includes(k))||(m&&e.shiftKey&&['i','j','c'].includes(k)))e.preventDefault()});
+document.addEventListener('keyup',e=>{if(e.key==='PrintScreen'&&live()){try{navigator.clipboard.writeText('')}catch(_){}toast('Tangkapan layar tidak diizinkan saat ujian.')}});
 window.addEventListener('beforeunload',e=>{if(live()){e.preventDefault();e.returnValue=''}});
 setInterval(()=>{if(!live())return;const s=rem();
  document.querySelectorAll('.tmx').forEach(el=>{el.textContent=tmTxt(s);el.className='tmx font-mono font-bold '+(s<60?'text-red-600':'text-brand-700')})
