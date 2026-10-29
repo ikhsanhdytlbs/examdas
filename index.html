@@ -644,7 +644,7 @@ async function attDet(u){const r=AD.att.find(x=>x.u===u&&x.pkg===sp);modal(`<p c
 const attDetF=f=>{DT.f=f;attDetV()};
 function attJump(i){DT.f='all';attDetV();const e=document.getElementById('dq'+i);if(e)e.scrollIntoView({block:'start'})}
 function dtFix(q,it){if(q.type!=='isian'||!answered(it.ans))return'';
- if(it.pts!=null)return`<div class="mt-2 flex items-center gap-2 flex-wrap rounded-lg bg-violet-50 border border-violet-200 px-3 py-2 text-sm"><span class="text-violet-800">Dikoreksi guru: <b>${it.pts}/100</b></span><button class="${G} !py-1" onclick="dtSet(${q.id},null)">Batalkan koreksi</button></div>`;
+ if(it.pts!=null)return`<div class="mt-2 flex items-center gap-2 flex-wrap rounded-lg bg-violet-50 border border-violet-200 px-3 py-2 text-sm"><span class="text-violet-800">${+it.pts>=100?'<b>Dianggap benar oleh guru</b>':'Dikoreksi guru: <b>'+it.pts+'/100</b>'}</span><button class="${G} !py-1" onclick="dtSet(${q.id},null)">Batalkan koreksi</button></div>`;
  if(it.s>=1)return'';
  return`<div class="mt-2 flex items-center gap-2 flex-wrap rounded-lg bg-slate-50 border px-3 py-2 text-sm"><span class="text-slate-600">Salah ketik?</span><button class="${Gr} !py-1" onclick="dtSet(${q.id},100)">Anggap benar</button><button class="${G} !py-1" onclick="dtSet(${q.id},50)">Setengah benar</button></div>`}
 async function dtSet(qid,p){if(!DT)return;const mi=document.querySelector('#modal .mi'),top=mi?mi.scrollTop:0,f=DT.f;
@@ -672,7 +672,7 @@ function attDetV(){const d=DT.d,Qm=Object.fromEntries(AD.qs.filter(q=>q.pkg===sp
 <div class="flex flex-wrap gap-1.5 mb-3">${fl.map(([k,l,n])=>`<button onclick="attDetF('${k}')" class="px-3 py-1 rounded-full text-xs font-medium border ${DT.f===k?'bg-brand-600 text-white border-brand-600':'bg-white text-slate-600 hover:bg-slate-50'}">${l} (${n})</button>`).join('')}</div>
 ${pcf(sp).shufopt?'<p class="text-xs text-slate-500 mb-2">Huruf pilihan mengikuti urutan di bank soal. Siswa melihat urutan pilihan yang diacak.</p>':''}
 ${vis.map(r=>{const q=r.q;if(!q)return`<div class="border rounded-xl p-3 mb-2 text-sm text-slate-500">Soal ${r.no} sudah dihapus dari paket.</div>`;
- const lab=(q.type==='uraian'||r.it.pts!=null)&&r.it.pts!=null?`Nilai ${r.it.pts}/100`:DS[r.s][0];
+ const lab=r.it.pts!=null&&+r.it.pts<100?`Nilai ${r.it.pts}/100`:DS[r.s][0];
  return`<div id="dq${r.no}" class="border border-slate-200 rounded-xl p-3 sm:p-4 mb-3"><div class="flex justify-between items-start gap-2 mb-2"><div class="min-w-0"><span class="inline-flex w-7 h-7 rounded-lg bg-brand-50 text-brand-700 font-bold text-sm items-center justify-center mr-1.5">${r.no}</span><span class="text-xs bg-slate-100 border rounded px-1.5 py-0.5">${TY[q.type]}</span>${q.w!==1?` <span class="text-xs text-slate-500">bobot ${q.w}</span>`:''}</div><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap ${DS[r.s][2]}">${lab}</span></div><div class="text-sm mb-2 break-words">${qTxt(q.text)}</div>${dtBody(q,r.it)}${dtFix(q,r.it)}</div>`}).join('')||'<p class="text-sm text-slate-500">Tidak ada soal pada kategori ini.</p>'}`;
  }finally{RAW=false}
  modal(html);const mi=document.querySelector('#modal .mi');if(mi){mi.classList.remove('max-w-2xl');mi.classList.add('max-w-3xl')}}
