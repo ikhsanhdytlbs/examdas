@@ -776,9 +776,10 @@ const gDel=u=>ask('Hapus akun ini? Paketnya dipindahkan ke Anda dan dinonaktifka
 function tgtU(pid,att){const k=String(pcf(pid).kelas||'').trim();let set;
  if(k)set=new Set(k.toLowerCase().split(/\s*[,;]\s*/));else if(att.length)set=new Set(att.map(r=>String(r.kelas||'').toLowerCase()));else return()=>true;
  return u=>set.has(String(u.kelas||'').toLowerCase())}
+const kirimTx=(at,s)=>{const d=new Date(+at),t=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':'),y=d.getFullYear()!==new Date().getFullYear();return d.toLocaleDateString('id-ID',{day:'numeric',month:'short',...(y?{year:'numeric'}:{})}).replace('.','')+(s?' ':', ')+t};
 function rekapV(){if(!AD.pkgs.length)return noPk('rekap','Setelah paket dibuat dan dikerjakan siswa, hasilnya dipantau di sini.');const kk=kkmOf(sp),tg=tgtU(sp,AD.att.filter(r=>r.pkg===sp)),U=AD.users.filter(u=>tg(u)&&(!kf||u.kelas===kf)),A=AD.att.filter(r=>r.pkg===sp&&(!kf||r.kelas===kf)),done=A.filter(r=>r.done),fin=done.filter(r=>!r.pending),
  avg=fin.length?(fin.reduce((s,r)=>s+ +r.score,0)/fin.length).toFixed(1):'-',ing=A.length-done.length,notyet=U.filter(u=>!A.some(r=>r.u===u.u)).length,pend=done.filter(r=>r.pending>0).length;
-const st=r=>{if(r.done){const c=r.reason==='Dikumpulkan siswa'?'green':/pelanggaran|curang/i.test(r.reason||'')?'red':'amber';return`<span class="${bdg(c)}">${esc(r.reason)}</span>`+(r.at?`<div class="text-xs text-slate-500 mt-1">Dikirim ${new Date(+r.at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':')}</div>`:'')+(r.pending?`<div class="text-xs text-amber-700 mt-1">${r.pending} uraian belum dinilai</div>`:'')}
+const st=r=>{if(r.done){const c=r.reason==='Dikumpulkan siswa'?'green':/pelanggaran|curang/i.test(r.reason||'')?'red':'amber';return`<span class="${bdg(c)}">${esc(r.reason)}</span>`+(r.at?`<div class="text-xs text-slate-500 mt-1">Dikirim ${kirimTx(r.at)}</div>`:'')+(r.pending?`<div class="text-xs text-amber-700 mt-1">${r.pending} uraian belum dinilai</div>`:'')}
  const m=Math.max(0,Math.ceil((r.end-(Date.now()+off))/60000));return`<span class="${bdg('blue')}"><span class="live-dot"></span>Sedang ujian</span><div class="text-xs text-slate-500 mt-1">sisa ${m} mnt</div>`};
 const ini=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 const ovo=(AD.ov||[]).find(o=>o.id===sp)||{},pp=AD.pkgs.find(x=>x.id===sp)||{},kl_=ovo.kelas||pcf(sp).kelas,meta=[ovo.ownername||pp.ownername,(ovo.n??pp.n)!=null?(ovo.n??pp.n)+' soal':'',kl_?'Kelas '+kl_:''].filter(Boolean).join(' · ');
@@ -886,7 +887,7 @@ async function pdf(){
  let ks=kf?[kf]:[...new Set([...all.map(r=>r.kelas||''),...us.map(u=>u.kelas||'')])].sort((a,b)=>(!a-!b)||cm(a,b));if(!ks.length)ks=[''];
  const B=ks.map(k=>{const A=all.filter(r=>(r.kelas||'')===k),have=new Set(A.map(r=>r.u)),U=us.filter(u=>(u.kelas||'')===k&&!have.has(u.u));
   const rows=[...A.map(r=>{let st,tone='slate';if(r.done){if(r.pending){st='Menunggu uraian';tone='amber'}else if(kk!=null){st=+r.score>=kk?'Tuntas':'Remedial';tone=+r.score>=kk?'green':'red'}else{st='Selesai';tone='green'}}else{st='Sedang ujian';tone='amber'}
-   return{name:r.name,u:r.u,nilai:r.done?String(r.score)+(r.pending?'*':''):'-',benar:r.done?r.correct+'/'+r.total:'-',st,tone,kirim:r.done&&r.at?new Date(+r.at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':'):'-',warn:r.warns?String(r.warns):'-',sc:r.done&&!r.pending?+r.score:null,done:r.done}}),
+   return{name:r.name,u:r.u,nilai:r.done?String(r.score)+(r.pending?'*':''):'-',benar:r.done?r.correct+'/'+r.total:'-',st,tone,kirim:r.done&&r.at?kirimTx(r.at,1):'-',warn:r.warns?String(r.warns):'-',sc:r.done&&!r.pending?+r.score:null,done:r.done}}),
    ...U.map(u=>({name:u.name,u:u.u,nilai:'-',benar:'-',st:'Belum mengerjakan',tone:'slate',kirim:'-',warn:'-',sc:null,done:false}))].sort((a,b)=>cm(a.name,b.name));
   return{k,rows}});
  if(!B.some(b=>b.rows.length))return toast('Belum ada data untuk dibuat laporan.');
@@ -895,7 +896,7 @@ async function pdf(){
  const fit=(t,f,z,w)=>{t=T(t);if(f.widthOfTextAtSize(t,z)<=w)return t;while(t.length>1&&f.widthOfTextAtSize(t+'...',z)>w)t=t.slice(0,-1);return t+'...'};
  const wrap=(t,f,z,w)=>{const out=[];let cur='';T(t).split(/\s+/).forEach(wd=>{const n=cur?cur+' '+wd:wd;if(f.widthOfTextAtSize(n,z)>w&&cur){out.push(cur);cur=wd}else cur=n});if(cur)out.push(cur);return out};
  const kl=k=>k||'Tanpa kelas',tgl=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}),owner=(AD.ov||[]).find(o=>o.id===sp)?.ownername||p.ownername||S.name;
- const col=[['No',26,'c'],['Nama siswa',175,'l'],['Nilai',46,'c'],['Benar',48,'c'],['Status',100,'l'],['Dikirim',52,'c'],['Pelanggaran',68,'c']];
+ const col=[['No',26,'c'],['Nama siswa',150,'l'],['Nilai',46,'c'],['Benar',48,'c'],['Status',100,'l'],['Dikirim',77,'c'],['Pelanggaran',68,'c']];
  let pg,y,LGI=null;if(SLG){try{LGI=await doc.embedPng(SLG)}catch(e){}}
  const np=()=>{pg=doc.addPage([W,H]);y=H-M};
  const thead=()=>{pg.drawRectangle({x:M,y:y-18,width:CW,height:18,color:C.head});let x=M;col.forEach(([l,w,a])=>{const tw=FB.widthOfTextAtSize(l,8.5);pg.drawText(l,{x:a==='c'?x+(w-tw)/2:x+6,y:y-12.5,size:8.5,font:FB,color:C.wh});x+=w});y-=18};
