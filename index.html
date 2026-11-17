@@ -380,7 +380,7 @@ async function devCheck(){
  // 4 layar
  const w=innerWidth,h=innerHeight,fs=!!(document.documentElement.requestFullscreen);add('Layar',w<320?'warn':'ok',w+' x '+h+' piksel'+(w<320?'. Layar sempit, tulisan bisa terasa padat.':'.')+(fs?' Layar penuh didukung.':' Layar penuh tidak didukung di browser ini.'));
  // 5 baterai
- try{if(navigator.getBattery){const b=await navigator.getBattery(),pc=Math.round(b.level*100);add('Baterai',pc>=30||b.charging?'ok':'warn',pc+'%'+(b.charging?' (sedang diisi).':'.')+(pc<30&&!b.charging?' Isi daya atau bawa pengisi daya.':''))}}catch(e){}
+ try{if(navigator.getBattery){const b=await navigator.getBattery(),pc=Math.round(b.level*100);const pcx=!('ontouchstart' in window)&&!(navigator.maxTouchPoints>0);if(b.level===1&&b.charging&&pcx)add('Baterai','ok','Komputer/laptop terhubung ke listrik, atau tanpa baterai. Status baterai tidak bisa dibaca pasti.');else add('Baterai',pc>=30||b.charging?'ok':'warn',pc+'%'+(b.charging?' (sedang diisi).':'.')+(pc<30&&!b.charging?' Isi daya atau bawa pengisi daya.':''))}}catch(e){}
  // 6 mode gelap / saran
  const bad=rows.includes('bad'),warn=rows.includes('warn');$('#dcs').innerHTML=bad?`<div class="rounded-lg bg-red-50 text-red-800 text-sm px-3 py-2"><b>Ada masalah.</b> Perbaiki dulu atau minta bantuan guru sebelum ujian.</div>`:warn?`<div class="rounded-lg bg-amber-50 text-amber-900 text-sm px-3 py-2"><b>Perlu dicek.</b> Perangkat bisa dipakai, tetapi perhatikan catatan di atas.</div>`:`<div class="rounded-lg bg-emerald-50 text-emerald-800 text-sm px-3 py-2"><b>Perangkat siap dipakai ujian.</b></div>`;
  try{if(window.renderMathInElement)math($('#dcl'))}catch(e){}}
