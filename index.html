@@ -199,7 +199,7 @@ body.wm::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:non
 @keyframes tstOut{to{opacity:0;transform:translateY(-.8rem) scale(.97)}}
 @keyframes tstBar{to{transform:scaleX(0)}}
 @media(prefers-reduced-motion:reduce){.tst{animation:none}.tst-bar{display:none}}
-.tabs.tabs7>button{flex:1 1 0}.tabs{display:flex;gap:.5rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs>button{flex:none;white-space:nowrap}
+@media(min-width:640px){.tabs.tabs7{display:grid;grid-template-columns:repeat(6,minmax(0,8.5rem));justify-content:center;gap:.5rem;overflow:visible}}.tabs.tabs7>button{flex:1 1 0}.tabs{display:flex;gap:.5rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs>button{flex:none;white-space:nowrap}
 @media(max-width:640px){
 input,select,textarea{font-size:16px!important}
 .mw{align-items:flex-end!important;padding:0!important}
@@ -225,7 +225,7 @@ table.rt3 td[data-l="Nama"]::before,table.rt3 td[data-l="Status"]::before{conten
 table.rt3 td[data-l="Kelas"]{display:none}
 table.rt3 td.ac{padding-top:.2rem}}
 </style>
-<link rel="stylesheet" href="app.css?v=ceda47aa"></head><body class="login">
+<link rel="stylesheet" href="app.css?v=56ac7bef"></head><body class="login">
 <script>try{if(localStorage.getItem("cbt_sess"))document.body.className=""}catch(e){}</script>
 <div id="bg" aria-hidden="true">
 <div class="swoosh" style="top:16%;left:-10%;transform:rotate(14deg)"></div>
@@ -517,7 +517,7 @@ const emptyV=(ic,t,d,btns)=>`<div class="text-center py-10 px-4 max-w-md mx-auto
 const noPk=(ic,d)=>emptyV(ic,'Belum ada paket ujian',d||'Paket adalah satu ujian: berisi soal, durasi, dan pengaturannya. Buat paket pertama Anda untuk memulai.',[['Buat paket pertama','goTab(\'paket\');pkForm()',1],['Lihat panduan singkat','tour()']]);
 function adminV(){if(tab==='siswa'){tab='akun';AKv='siswa'}if(kf&&!kls().includes(kf))kf='';const T=[['rekap','Monitor Ujian','Monitor'],['analisis','Analisis soal','Analisis'],['paket','Paket','Paket'],['soal','Soal','Soal'],['akun','Akun','Akun'],['set','Pengaturan','Atur']];
 const sel=['soal'].includes(tab)&&AD.pkgs.length?`<div class="flex gap-2 mb-3 overflow-x-auto sm:flex-wrap pb-1 -mx-1 px-1" role="tablist" aria-label="Pilih paket">${AD.pkgs.map(p=>{const on=p.id===sp,c=ovCol(p.subject,AD.pkgs);return`<button role="tab" aria-selected="${on}" onclick="selPkg(${p.id})" title="${esc(p.name)}${isAdm()&&p.ownername?' – '+esc(p.ownername):''}" class="shrink-0 text-left rounded-xl border px-3 py-2 min-w-[8.5rem] max-w-[14rem] transition ${on?'border-brand-600 bg-brand-50 ring-1 ring-brand-600':'border-slate-200 bg-white hover:bg-slate-50'}"><div class="flex items-center gap-1.5"><span class="w-2 h-2 shrink-0 rounded-full ${p.active?'bg-emerald-500':'bg-slate-300'}"></span><b class="text-sm truncate ${on?'text-brand-700':'text-slate-800'}">${esc(p.name)}</b></div><div class="mt-1 flex items-center gap-1 text-[11px] min-w-0">${p.subject?`<span class="rounded-full px-1.5 py-px font-medium shrink-0 ${c[1]}">${esc(p.subject)}</span>`:''}${(isAdm()||p.canown===false)&&p.ownername?`<span class="text-slate-400 truncate">${esc(p.ownername)}</span>`:''}</div></button>`}).join('')}</div>`:'';
-return hdr()+`<div class="max-w-6xl mx-auto p-3 sm:p-5"><div class="tabs tabs7 mb-4 bg-gradient-to-r from-brand-700 to-brand-500 rounded-2xl shadow-md p-1.5">${T.map(([k,l,s])=>`<button onclick="goTab('${k}')" class="flex items-center justify-center gap-2 sm:px-4 sm:py-2 rounded-xl sm:text-sm font-medium transition ${tab===k?'bg-white text-brand-700 font-bold shadow-lg ring-2 ring-accent':'bg-white text-slate-600 hover:bg-brand-50'}">${aIco(IC[k],'w-4 h-4')}<span class="sm:hidden">${s}</span><span class="hidden sm:inline">${l}</span></button>`).join('')}</div>${sel}<div data-vt class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">${{soal:soalV,paket:paketV,akun:akunV,set:setV,rekap:rekapV,analisis:analisisV}[tab]()}</div></div>`}
+return hdr()+`<div class="max-w-6xl mx-auto p-3 sm:p-5"><div class="tabs tabs7 mb-4 bg-gradient-to-r from-brand-700 to-brand-500 rounded-2xl shadow-md p-1.5">${T.map(([k,l,s])=>`<button onclick="goTab('${k}')" class="flex items-center justify-center gap-2 sm:px-3 sm:py-1.5 rounded-xl sm:text-sm font-medium transition ${tab===k?'bg-accent text-slate-900 font-bold shadow-lg':'bg-white text-slate-600 hover:bg-brand-50'}">${aIco(IC[k],'w-4 h-4')}<span class="sm:hidden">${s}</span><span class="hidden sm:inline">${l}</span></button>`).join('')}</div>${sel}<div data-vt class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">${{soal:soalV,paket:paketV,akun:akunV,set:setV,rekap:rekapV,analisis:analisisV}[tab]()}</div></div>`}
 const goTab=k=>{if(k==='siswa'){k='akun';AKv='siswa'}if(k==='set'&&isAdm())loadAU();if(PSE&&PSdirty&&k!=='paket')return ask('Perubahan pengaturan paket belum disimpan. Tinggalkan?',()=>{PSdirty=false;PSE=null;goTab(k)},'Tinggalkan');if(k!=='paket')PSE=null;tab=k;if(k==='analisis')loadIA();else if(k==='soal'||k==='rekap'){render();refresh()}else render()};
 const selPkg=v=>{sp=+v;IA=null;if(tab==='analisis')loadIA();else render()};
 const kls=()=>[...new Set(AD.users.map(u=>u.kelas).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
