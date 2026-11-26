@@ -1200,7 +1200,7 @@ async function pdf(){
  const{PDFDocument,StandardFonts,rgb}=window.PDFLib,p=AD.pkgs.find(x=>x.id===sp);if(!p)return;
  const kk=kkmOf(sp),cm=(a,b)=>String(a||'').localeCompare(String(b||''),'id',{numeric:true,sensitivity:'base'}),all=AD.att.filter(r=>r.pkg===sp),tg=tgtU(sp,all),us=AD.users.filter(u=>tg(u));
  let ks=kf?[kf]:[...new Set([...all.map(r=>r.kelas||''),...us.map(u=>u.kelas||'')])].sort((a,b)=>(!a-!b)||cm(a,b));if(!ks.length)ks=[''];
- const B=ks.map(k=>{const A=all.filter(r=>(r.kelas||'')===k),have=new Set(A.map(r=>r.u)),U=us.filter(u=>(u.kelas||'')===k&&!have.has(u.u));
+ const B=ks.map(k=>{const A=all.filter(r=>(r.kelas||'')===k),have=new Set(A.map(r=>r.u)),U=taCur()!==taNow()?[]:us.filter(u=>(u.kelas||'')===k&&!have.has(u.u));
   const rows=[...A.map(r=>{let st,tone='slate';if(r.done){if(r.pending){st='Menunggu uraian';tone='amber'}else if(kk!=null){st=+r.score>=kk?'Tuntas':'Remedial';tone=+r.score>=kk?'green':'red'}else{st='Selesai';tone='green'}}else{st='Sedang ujian';tone='amber'}
    return{name:r.name,u:r.u,nilai:r.done?String(r.score)+(r.pending?'*':''):'-',benar:r.done?r.correct+'/'+r.total:'-',st,tone,kirim:r.done&&r.at?kirimTx(r.at,1):'-',warn:r.warns?String(r.warns):'-',sc:r.done&&!r.pending?+r.score:null,done:r.done}}),
    ...U.map(u=>({name:u.name,u:u.u,nilai:'-',benar:'-',st:'Belum mengerjakan',tone:'slate',kirim:'-',warn:'-',sc:null,done:false}))].sort((a,b)=>cm(a.name,b.name));
@@ -1219,7 +1219,7 @@ async function pdf(){
   if(LGI){const z=44,r=Math.min(z/LGI.width,z/LGI.height);pg.drawImage(LGI,{x:W-M-LGI.width*r,y:y-z+4,width:LGI.width*r,height:LGI.height*r})}
   pg.drawText('LAPORAN HASIL UJIAN'+(CF.title?' - '+fit(CF.title,FB,9,300).toUpperCase():''),{x:M,y:y-14,size:9,font:FB,color:C.head});y-=18;
   wrap(p.name,FB,16,CW).slice(0,2).forEach(l=>{pg.drawText(l,{x:M,y:y-16,size:16,font:FB,color:C.ink});y-=20});
-  const meta=[p.subject,'Kelas '+kl(b.k),owner?'Guru: '+owner:'',kk!=null?'KKM '+kk:'','Dicetak '+tgl].filter(Boolean).join('  |  ');
+  const meta=[p.subject,'Kelas '+kl(b.k),owner?'Guru: '+owner:'','Tahun ajaran '+taCur(),kk!=null?'KKM '+kk:'','Dicetak '+tgl].filter(Boolean).join('  |  ');
   wrap(meta,F,9,CW).forEach(l=>{pg.drawText(l,{x:M,y:y-11,size:9,font:F,color:C.mut});y-=12});y-=8;
   const A=b.rows.filter(r=>r.done),fin=b.rows.filter(r=>r.sc!=null).map(r=>r.sc),avg=fin.length?fin.reduce((a,c)=>a+c,0)/fin.length:null,f1=v=>v==null?'-':String(Math.round(v*10)/10),
    last=kk!=null?(fin.filter(v=>v>=kk).length+' / '+fin.filter(v=>v<kk).length):String(b.rows.filter(r=>r.st==='Belum mengerjakan').length),
@@ -1281,7 +1281,7 @@ function nilV(){const ms=[...new Set(AD.pkgs.filter(p=>AD.att.some(a=>a.pkg===p.
 function nilTog(id,on){on?NL.sel.add(id):NL.sel.delete(id);nilV()}
 async function nilXls(){try{await loadX()}catch(e){return toast(e.message)}const D=nilData(),f=v=>v===null?'':(Math.round(v*10)/10);if(!D.ids.length||!D.rows.length)return;
  const tgl=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}),H=['No','Nama','Username','Kelas',...D.ids.map(p=>p.name),'Rata-rata'];
- const aoa=[['NILAI GABUNGAN: '+NL.m+(NL.k?' - Kelas '+NL.k:'')],['Dicetak '+tgl+' | Rata-rata '+(NL.zero?'menghitung ujian yang tidak diikuti sebagai 0':'hanya dari ujian yang dikerjakan')],[],H,...D.rows.map((r,i)=>[i+1,r.u.name,r.u.u,r.u.kelas||'',...r.c.map(f),r.avg===null?'':f(r.avg)])];
+ const aoa=[['NILAI GABUNGAN: '+NL.m+(NL.k?' - Kelas '+NL.k:'')],['Tahun ajaran '+taCur()],['Dicetak '+tgl+' | Rata-rata '+(NL.zero?'menghitung ujian yang tidak diikuti sebagai 0':'hanya dari ujian yang dikerjakan')],[],H,...D.rows.map((r,i)=>[i+1,r.u.name,r.u.u,r.u.kelas||'',...r.c.map(f),r.avg===null?'':f(r.avg)])];
  const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:5},{wch:32},{wch:14},{wch:9},...D.ids.map(p=>({wch:Math.max(10,Math.min(22,p.name.length+2))})),{wch:11}];
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Nilai gabungan');XLSX.writeFile(wb,'nilai-gabungan-'+fnm(NL.m)+(NL.k?'-'+fnm(NL.k):'')+'.xlsx');toast('File Excel diunduh.')}
 /* Cetak naskah soal: tampilan siap cetak (rumus tampil lewat KaTeX), bisa disimpan sebagai PDF lewat dialog cetak */
@@ -1359,20 +1359,20 @@ async function pdfAna(){
 async function xls(){try{await loadX()}catch(e){return toast(e.message)}
  let X;try{X=await rpc('admin_export',{t:S.token,pid:sp})}catch(e){return toast(e.message)}
  const p=X.pkg,Q=X.qs,kk=kkmOf(sp),cmp=(a,b)=>String(a||'').localeCompare(String(b||''),'id',{numeric:true,sensitivity:'base'});
- const A0=X.att.filter(r=>!kf||r.kelas===kf),have=new Set(A0.map(r=>r.u));
+ const A0=X.att.filter(r=>(!kf||r.kelas===kf)&&((MM[r.u+'|'+sp]&&MM[r.u+'|'+sp].ta)||taNow())===taCur()),have=new Set(A0.map(r=>r.u));
  const R=A0.map(a=>{const its=Q.filter(q=>a.items&&a.items[q.id]).map(q=>({q,...a.items[q.id]}));
   let dj=0,be=0,se=0,sa=0,tu=0,po=0,pm=0;
   its.forEach(x=>{pm+=x.q.w;const has=answered(x.a);if(has)dj++;if(x.s==null){if(has)tu++}else{po+=x.s*x.q.w;if(x.s>=0.999)be++;else if(x.s>0)se++;else if(has)sa++}});
   const sc=a.done?+a.score:null;
   return{a,its,n:its.length,dj,ko:its.length-dj,be,se,sa,tu,po,pm,sc,ok:a.done&&!a.pending&&sc!=null,dur:a.start&&a.fin&&a.done?Math.max(0,Math.round((a.fin-a.start)/60000)):''}}).sort((x,y)=>cmp(x.a.kelas,y.a.kelas)||cmp(x.a.name,y.a.name));
- const tg=tgtU(sp,X.att),NA=AD.users.filter(u=>tg(u)&&(!kf||u.kelas===kf)&&!have.has(u.u)).sort((a,b)=>cmp(a.kelas,b.kelas)||cmp(a.name,b.name));
+ const tg=tgtU(sp,X.att),NA=taCur()!==taNow()?[]:AD.users.filter(u=>tg(u)&&(!kf||u.kelas===kf)&&!have.has(u.u)).sort((a,b)=>cmp(a.kelas,b.kelas)||cmp(a.name,b.name));
  const fin=R.filter(r=>r.ok),sc=fin.map(r=>r.sc).sort((a,b)=>a-b),N=sc.length,avg=N?sc.reduce((a,b)=>a+b,0)/N:null,
   med=N?(N%2?sc[(N-1)/2]:(sc[N/2-1]+sc[N/2])/2):null,sd=N?Math.sqrt(sc.reduce((a,b)=>a+(b-avg)**2,0)/N):null,
   stt=r=>!r.a.done?'Sedang ujian':r.a.pending?'Selesai (uraian belum dinilai)':'Selesai',
   ket=r=>kk==null||!r.ok?'':r.sc>=kk?'Tuntas':'Remedial';
  const wb=XLSX.utils.book_new(),add=(ws,name,cols)=>{if(cols)ws['!cols']=cols.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,name)};
  // 1. Rekap nilai
- const head=[['Mata pelajaran',xsafe(p.subject||'')],['Judul ujian',xsafe(p.name||'')],['Guru',xsafe(p.owner||'')],['Kelas',kf||'Semua kelas'],['Durasi ujian (menit)',p.duration],['KKM',kk==null?'-':kk],['Tanggal unduh',new Date().toLocaleString('id-ID')],[]];
+ const head=[['Tahun ajaran',taCur()],['Mata pelajaran',xsafe(p.subject||'')],['Judul ujian',xsafe(p.name||'')],['Guru',xsafe(p.owner||'')],['Kelas',kf||'Semua kelas'],['Durasi ujian (menit)',p.duration],['KKM',kk==null?'-':kk],['Tanggal unduh',new Date().toLocaleString('id-ID')],[]];
  const th=['No','Nama','Username','Kelas','Status','Mulai','Selesai','Durasi pengerjaan (menit)','Jumlah soal','Dijawab','Tidak dijawab','Benar penuh','Benar sebagian','Salah','Uraian belum dinilai','Poin diperoleh','Poin maksimum','Nilai','KKM','Ketuntasan','Pelanggaran','Keterangan'];
  const rows=[...R.map((r,i)=>[i+1,xsafe(r.a.name),xsafe(r.a.u),xsafe(r.a.kelas||''),stt(r),dtm(r.a.start),r.a.done?dtm(r.a.fin):'',r.dur,r.n,r.dj,r.ko,r.be,r.se,r.sa,r.tu,r2(r.po),r2(r.pm),r.a.done?r.sc:'',kk==null?'':kk,ket(r),r.a.warns||0,xsafe(r.a.done?r.a.reason||'':'')])];
  NA.forEach((u,i)=>rows.push([R.length+i+1,xsafe(u.name),xsafe(u.u),xsafe(u.kelas||''),'Belum mengerjakan','','','','','','','','','','','','','',kk==null?'':kk,'','','']));
