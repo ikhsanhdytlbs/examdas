@@ -391,7 +391,7 @@ const taTag=a=>{const m=MM[a.u+'|'+a.pkg];a.ta=m&&m.ta?m.ta:(a.ta||taNow());if(m
 const taList=()=>{const k=new Set([taNow()]);(AD&&AD.attAll||[]).forEach(a=>a.ta&&k.add(a.ta));return[...k].sort().reverse()};
 function taApply(){if(!AD)return;const c=taCur(),all=AD.attAll||AD.att||[];AD.att=all.filter(a=>a.ta===c);(AD.ov||[]).forEach(o=>{const l=AD.att.filter(a=>a.pkg===o.id);o.done=l.filter(a=>a.done).length;o.run=l.length-o.done})}
 const taSet=v=>{TAS=v===taNow()?'':v;IA=null;taApply();if(tab==='analisis')loadIA();else render()};
-const taSel=()=>{const L=taList();return`<label class="hidden sm:flex items-center gap-1.5 text-sm text-white/90">Tahun ajaran<select class="rounded-lg bg-white/15 text-white border border-white/25 px-2.5 py-1.5 text-sm" style="color-scheme:dark" onchange="taSet(this.value)" aria-label="Tahun ajaran">${L.map(v=>`<option value="${esc(v)}" ${v===taCur()?'selected':''} style="color:#0f172a">${esc(v)}${v===taNow()?' (sekarang)':''}</option>`).join('')}</select></label>`};
+const taSel=()=>{const L=taList();return`<label class="hidden sm:flex items-center gap-1.5 text-sm text-white/90">Tahun ajaran<select class="rounded-lg bg-white text-brand-700 font-semibold border border-white px-2.5 py-1.5 text-sm" style="color-scheme:dark" onchange="taSet(this.value)" aria-label="Tahun ajaran">${L.map(v=>`<option value="${esc(v)}" ${v===taCur()?'selected':''} style="color:#0f172a">${esc(v)}${v===taNow()?' (sekarang)':''}</option>`).join('')}</select></label>`};
 const act=async(fn,a)=>{try{await rpc(fn,{t:S.token,...a});await load();render();return true}catch(e){toast(e.message);return false}};
 
 let inR=false;
